@@ -638,6 +638,6 @@ static struct mipi_dsi_driver panel_whatever_dsi_driver =
 module_mipi_dsi_driver(panel_whatever_dsi_driver);
 
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Sathya Laufer <sathya@laufers.net>");
+MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Some test driver for a DSI panel");
 MODULE_VERSION("0.01");
