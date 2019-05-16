@@ -1,0 +1,92 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835", "brcm,bcm2708", "brcm,bcm2709";
+
+    /* video */
+
+    fragment@0 {
+        target=<&dsi1>;
+
+        __overlay__ {
+            status = "okay";
+
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            power-domains = <&power 18>;
+
+            port {
+                dsi1_out_port: endpoint {
+                    remote-endpoint = <&panel_dsi_in>;
+                };
+            };
+
+            panel_test: panel@0 {
+                compatible = "divus,whatever";
+                reg=<0>;
+                label= "test_display";
+                vc4_dsi = <&dsi1>;
+                reset = <2>;
+                port {
+                    panel_dsi_in: endpoint {
+                        remote-endpoint = <&dsi1_out_port>;
+                    };
+                };
+            };
+        };
+    };
+
+    /* touch */
+
+	fragment@1 {
+		target = <&gpio>;
+		__overlay__ {
+			goodix_pins: goodix_pins {
+				brcm,pins = <6 7>;
+				brcm,function = <0 0>; /* out, out */
+				brcm,pull = <2 1>; /* pull up, pull down */
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&i2c0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+
+			gt911: gt911@14 {
+				compatible = "goodix,gt911";
+				reg = <0x14>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&goodix_pins>;
+				interrupt-parent = <&gpio>;
+				interrupts = <6 2>;
+				irq-gpios = <&gpio 6 0>;
+				reset-gpios = <&gpio 7 0>;
+			};
+		};
+	};
+
+	__overrides__ {
+		interrupt = <&goodix_pins>,"brcm,pins:0",
+                    <&gt911>,"interrupts:0",
+                    <&gt911>,"irq-gpios:4";
+		reset = <&goodix_pins>,"brcm,pins:4",
+                <&gt911>,"reset-gpios:4";
+	};
+
+	/* disable hdmi */
+
+/*
+	fragment@3 {
+        target=<&hdmi>;
+        __overlay__ {
+            status = "disabled";
+        };
+	};
+*/
+};
