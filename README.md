@@ -80,7 +80,7 @@ Those can be changed, of course, but if changed, the overlay must be changed.
 
 There are things that can be changed in the overlay - the used pins. Some things can be changed for the touch part by using the 'firmware' mentioned above. 
 There are of course some things that can be changed/added either in kernel start line or config.txt or other configuration files, but there is one thing that I found during tests that is not strwaightforward.
-By default, the desktop starts in portrait mode. Do not use the usual method of rotating the screen in config.txt, it might prevent booting up.
+By default, the desktop starts in portrait mode. If you want to rotate it in portrait mode, do not use the usual method of rotating the screen in config.txt, it might prevent booting up.
 After the X desktop is started, it can be rotated with these commands:
 
 Screen: 
