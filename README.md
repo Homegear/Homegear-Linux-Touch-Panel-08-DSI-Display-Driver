@@ -9,8 +9,10 @@ I have set the following building structure, if different some scripts will need
 
 The kernel source is in:
 $HOME/raspberry/linux
+
 Installation directory is:
 $HOME/raspberry/chroot
+
 Panel sources are in
 $HOME/raspberry/panel (this can have any name, but still has to be in $HOME/raspberry).
 
