@@ -1,0 +1,22 @@
+[pi3]
+# We want serial console output!
+#enable_uart=1
+
+#device-tree=bcm2710-rpi-cm3.dtb
+
+#dtdebug=on
+#boot_delay=1
+
+#gpu_mem=128
+
+#gpio=0-1=a0,dl
+
+gpio=2=op,dh
+gpio=7=op,dh
+
+#dtparam=i2c_vc=on
+#dtparam=i2c=on
+
+ignore_lcd=1
+dtoverlay=vc4-kms-v3d,cma-256
+dtoverlay=lcd_driver

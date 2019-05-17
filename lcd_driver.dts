@@ -78,15 +78,4 @@
 		reset = <&goodix_pins>,"brcm,pins:4",
                 <&gt911>,"reset-gpios:4";
 	};
-
-	/* disable hdmi */
-
-/*
-	fragment@3 {
-        target=<&hdmi>;
-        __overlay__ {
-            status = "disabled";
-        };
-	};
-*/
 };
