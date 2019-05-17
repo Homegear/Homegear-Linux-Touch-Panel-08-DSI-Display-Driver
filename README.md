@@ -22,7 +22,7 @@ The 'tools' repository is here: https://github.com/raspberrypi/tools
 I think a description of how to use is here: https://stackoverflow.com/questions/19162072/how-to-install-the-raspberry-pi-cross-compiler-on-my-linux-host-machine
 
 Anholt has a short description of a build environment here: https://github.com/anholt/linux/wiki/Raspberry-Pi-development-environment
-It works for raspberry pi, but for compute module avoid the booting from the network part, I managed to brick the module that way (partially, with some effort it could be still flashed).
+It works for raspberry pi, but for compute module avoid the booting from the network part, I managed to brick the module that way (partially, with some effort it could still be flashed).
 Anyway, the chroot setting there is not described well, I had to look elsewhere for the info, works nicely with raspberry pi 3, but not with the compute module on dev board.
 
 ### Flashing the compute module
