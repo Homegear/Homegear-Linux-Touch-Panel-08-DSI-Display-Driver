@@ -366,7 +366,7 @@ static int whatever_prepare(struct drm_panel *panel)
 
     msleep(125);
 
-    ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+    ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, /*MIPI_DSI_DCS_TEAR_MODE_VBLANK*/MIPI_DSI_DCS_TEAR_MODE_VHBLANK);
 	if (ret)
 		return ret;
 

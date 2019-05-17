@@ -78,4 +78,5 @@
 		reset = <&goodix_pins>,"brcm,pins:4",
                 <&gt911>,"reset-gpios:4";
 	};
+
 };
