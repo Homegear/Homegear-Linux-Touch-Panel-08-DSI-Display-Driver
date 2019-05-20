@@ -276,7 +276,7 @@ static const struct panel_command panel_cmds_init[] =
     SWITCH_PAGE_CMD(0),
     COMMAND_CMD(0xE6, 0x02),
     COMMAND_CMD(0xE7, 0x02),
-    //TE
+    //TE - something related with tear, but how to set?
     COMMAND_CMD(0x35, 0x00),
     CMD_DELAY(0x11, 0x00, 100),
     CMD_DELAY(0x29, 0x00, 100),
@@ -366,7 +366,7 @@ static int whatever_prepare(struct drm_panel *panel)
 
     msleep(125);
 
-    ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, /*MIPI_DSI_DCS_TEAR_MODE_VBLANK*/MIPI_DSI_DCS_TEAR_MODE_VHBLANK);
+    ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK/*MIPI_DSI_DCS_TEAR_MODE_VHBLANK*/);
 	if (ret)
 		return ret;
 
@@ -481,6 +481,7 @@ static int whatever_disable(struct drm_panel *panel)
 
 static int whatever_get_modes(struct drm_panel *panel)
 {
+    static const u32 bus_format = MEDIA_BUS_FMT_RGB888_1X24;
     struct drm_display_mode *mode;
 
     mode = drm_mode_duplicate(panel->drm, &default_mode);
@@ -499,6 +500,10 @@ static int whatever_get_modes(struct drm_panel *panel)
 
     panel->connector->display_info.width_mm = mode->width_mm;
     panel->connector->display_info.height_mm = mode->height_mm;
+
+    panel->connector->display_info.bpc = 8;
+
+	drm_display_info_set_bus_formats(&panel->connector->display_info, &bus_format, 1);
 
     return 1;
 }
@@ -554,8 +559,18 @@ static int whatever_probe(struct mipi_dsi_device *dsi)
 
     // TODO: try other modes
 
-    // if I remove any of the last two or both, it seems to work fine
-    dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VIDEO_BURST | MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
+    // also seems to work fine even if MIPI_DSI_MODE_LPM is not set - this makes the driver send dts commands in 'slow' mode
+    // should not hurt to be set
+
+
+    //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_VSYNC_FLUSH | MIPI_DSI_MODE_VIDEO_AUTO_VERT;
+
+    //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VSYNC_FLUSH; // this seems more tear free than other settings? Still can see tearing from time to time.
+
+    //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS  | MIPI_DSI_MODE_VIDEO_HSA /*| MIPI_DSI_MODE_VSYNC_FLUSH*/;
+
+    //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_VIDEO_AUTO_VERT/*| MIPI_DSI_MODE_VSYNC_FLUSH*/;
+    dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
