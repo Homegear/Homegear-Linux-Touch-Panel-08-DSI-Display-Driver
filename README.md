@@ -25,6 +25,8 @@ Anholt has a short description of a build environment here: https://github.com/a
 It works for raspberry pi, but for compute module avoid the booting from the network part, I managed to brick the module that way (partially, with some effort it could still be flashed).
 Anyway, the chroot setting there is not described well, I had to look elsewhere for the info, works nicely with raspberry pi 3, but not with the compute module on dev board.
 
+There is also info on kernel building here: https://www.raspberrypi.org/documentation/linux/kernel/building.md
+
 ### Flashing the compute module
 
 Rpiboot is here:
@@ -35,11 +37,16 @@ I got the 'with desktop' variant but not the full one, I installed the additiona
 
 Don't forget that immediately after you flash the device, to create an empty 'ssh' file in /boot, it will allow you to log in with ssh (otherwise it's disabled).
 
+Some more info is here: https://www.raspberrypi.org/documentation/hardware/computemodule/cm-emmc-flashing.md
+
 ### Firmware
 
 Firmware, if needed, is here: https://github.com/raspberrypi/firmware
 I tested with both the current firmware and the 'next' branch, fkms does not work with any of them (yet?). 
 kms works with both, because it's a 'full' driver.
+
+For the 'official' panel they recommend installing the 'blob' bin, here: https://www.raspberrypi.org/documentation/hardware/computemodule/cmio-display.md
+I think the goal is to change the default behaviour of 0 and 1 pins, which can also be done in config.txt. Here is some more info about that: https://www.raspberrypi.org/documentation/configuration/pin-configuration.md
 
 ### Compiling the panel driver and dts
 
@@ -78,7 +85,11 @@ Those can be changed, of course, but if changed, the overlay must be changed.
 
 ### Configuration
 
-There are things that can be changed in the overlay - the used pins. Some things can be changed for the touch part by using the 'firmware' mentioned above. 
+There are things that can be changed in the overlay - the used pins. Some general info about device trees and overlays, here:
+
+https://www.raspberrypi.org/documentation/configuration/device-tree.md
+
+Some things can be changed for the touch part by using the 'firmware' mentioned above. 
 There are of course some things that can be changed/added either in kernel start line or config.txt or other configuration files, but there is one thing that I found during tests that is not strwaightforward.
 By default, the desktop starts in portrait mode. If you want to rotate it in landscape mode, do not use the usual method of rotating the screen in config.txt, it might prevent booting up.
 After the X desktop is started, it can be rotated with these commands:
