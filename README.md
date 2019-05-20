@@ -50,7 +50,7 @@ I think the goal is to change the default behaviour of 0 and 1 pins, which can a
 
 ### Compiling the panel driver and dts
 
-Just run the two sh scripts in the panel directory and they should generate the ko file (the module) and the dtbo file (the overlay).
+Just run the two sh scripts in the panel directory (after having the kernel compiled, of course) and they should generate the ko file (the module) and the dtbo file (the overlay).
 
 ### Installing the driver
 
