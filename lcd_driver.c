@@ -42,21 +42,52 @@ struct whatever_touchscreen
 
 static const struct drm_display_mode default_mode =
 {
-    .clock		= 68700,
+    //.clock      = 68700,
+    .clock		= 68500,
     .vrefresh	= 60,
 
     .hdisplay	= 800,
-    .hsync_start= 800 + 32,
-    .hsync_end	= 800 + 32 + 20,
-    .htotal		= 800 + 32 + 20 + 20,
-
     .vdisplay	= 1280,
+
+/*
+	hfront-porch = <32>;
+	hsync-len = <20>;
+    hback-porch = <20>;
+
+	vfront-porch = <8>;
+	vsync-len = <4>;
+	vback-porch = <10>;
+*/
+
+// those are guessed values, this probably could be better
+
+// 1 for sync is too low - unless front porch is set to the lowest possible value, 9
+// back porch lower than 9 results in a very odd effect, as each line is moved horizontally, shaking, resulting in a fuzzy image
+
+// for front porch 9 and sync 1 the back porch seems to be either 9 or 10
+
+// setting the clock 'non continuous' for those settings results in a shaking image!
+
+/*
+    .hsync_start= 800 + 9,
+    .hsync_end	= 800 + 9 + 1,
+    .htotal		= 800 + 9 + 1 + 10,
+*/
+
+    .hsync_start= 800 + 10,
+    .hsync_end	= 800 + 10 + 2,
+    .htotal		= 800 + 10 + 2 + 10, // 822
+
+
+// those seem to be good
     .vsync_start= 1280 + 8,
     .vsync_end	= 1280 + 8 + 4,
-    .vtotal		= 1280 + 8 + 4 + 10,
+    .vtotal		= 1280 + 8 + 4 + 10, // 1302
 
     .width_mm = 170,
     .height_mm = 106,
+
+    .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
 };
 
 
@@ -563,6 +594,33 @@ static int whatever_probe(struct mipi_dsi_device *dsi)
     // should not hurt to be set
 
 
+/* DSI mode flags */
+
+/* video mode */
+//#define MIPI_DSI_MODE_VIDEO		BIT(0)
+/* video burst mode */
+//#define MIPI_DSI_MODE_VIDEO_BURST	BIT(1)
+/* video pulse mode */
+//#define MIPI_DSI_MODE_VIDEO_SYNC_PULSE	BIT(2)
+/* enable auto vertical count mode */
+//#define MIPI_DSI_MODE_VIDEO_AUTO_VERT	BIT(3)
+/* enable hsync-end packets in vsync-pulse and v-porch area */
+//#define MIPI_DSI_MODE_VIDEO_HSE		BIT(4)
+/* disable hfront-porch area */
+//#define MIPI_DSI_MODE_VIDEO_HFP		BIT(5)
+/* disable hback-porch area */
+//#define MIPI_DSI_MODE_VIDEO_HBP		BIT(6)
+/* disable hsync-active area */
+//#define MIPI_DSI_MODE_VIDEO_HSA		BIT(7)
+/* flush display FIFO on vsync pulse */
+//#define MIPI_DSI_MODE_VSYNC_FLUSH	BIT(8)
+/* disable EoT packets in HS mode */
+//#define MIPI_DSI_MODE_EOT_PACKET	BIT(9)
+/* device supports non-continuous clock behavior (DSI spec 5.6.1) */
+//#define MIPI_DSI_CLOCK_NON_CONTINUOUS	BIT(10)
+/* transmit data in low power */
+//#define MIPI_DSI_MODE_LPM		BIT(11)
+
     //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_VSYNC_FLUSH | MIPI_DSI_MODE_VIDEO_AUTO_VERT;
 
     //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VSYNC_FLUSH; // this seems more tear free than other settings? Still can see tearing from time to time.
@@ -570,7 +628,8 @@ static int whatever_probe(struct mipi_dsi_device *dsi)
     //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS  | MIPI_DSI_MODE_VIDEO_HSA /*| MIPI_DSI_MODE_VSYNC_FLUSH*/;
 
     //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_VIDEO_AUTO_VERT/*| MIPI_DSI_MODE_VSYNC_FLUSH*/;
-    dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
+
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VSYNC_FLUSH /*| MIPI_DSI_CLOCK_NON_CONTINUOUS */ /*| MIPI_DSI_MODE_VIDEO_SYNC_PULSE*/ /*| MIPI_DSI_MODE_VIDEO_BURST*/;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
