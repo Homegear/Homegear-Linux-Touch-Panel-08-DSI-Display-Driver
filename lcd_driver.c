@@ -42,8 +42,11 @@ struct whatever_touchscreen
 
 static const struct drm_display_mode default_mode =
 {
-    //.clock      = 68700,
-    .clock		= 68500,
+    .clock      = 68700, // original
+    //.clock      = 68121, // calculated for original timings
+    //.clock      = 64215, // calculated for reduced timings
+    //.clock        = 65699,
+
     .vrefresh	= 60,
 
     .hdisplay	= 800,
@@ -58,6 +61,17 @@ static const struct drm_display_mode default_mode =
 	vsync-len = <4>;
 	vback-porch = <10>;
 */
+
+    // Adjusted clock: 83333
+    // Adjusted h_sync_start: 2772
+    // Adjusted h_sync_end: 2792
+    // Adjusted htotal: 1066
+
+
+    .hsync_start= 800 + 32,
+    .hsync_end	= 800 + 32 + 20,
+    .htotal		= 800 + 32 + 20 + 20, // 872
+
 
 // those are guessed values, this probably could be better
 
@@ -74,20 +88,59 @@ static const struct drm_display_mode default_mode =
     .htotal		= 800 + 9 + 1 + 10,
 */
 
+    //Adjusted clock: 66666
+    //Adjusted h_sync_start: 841
+    //Adjusted h_sync_end: 843
+    //Adjusted htotal: 853
+
+/*
     .hsync_start= 800 + 10,
     .hsync_end	= 800 + 10 + 2,
-    .htotal		= 800 + 10 + 2 + 10, // 822
+    .htotal		= 800 + 10 + 2 + 10,
+*/
 
+// this is close to the original with timings, but the clock is too low?
+
+    //Adjusted clock: 66666
+    //Adjusted h_sync_start: 833
+    //Adjusted h_sync_end: 853
+    //Adjusted htotal: 873
+
+// forcing a higher clock gets this for the same settings:
+
+    // Adjusted clock: 83333
+    // Adjusted h_sync_start: 988 - very late! Is this a problem?
+    // Adjusted h_sync_end: 1008 - sync length 20 as needed
+    // Adjusted htotal: 1028 - back porch 20 as needed
+
+    /*
+    .hsync_start= 800 + 1,
+    .hsync_end	= 800 + 1 + 20,
+    .htotal		= 800 + 1 + 20 + 20, // 841
+    */
+
+    //Adjusted clock: 66666
+    //Adjusted h_sync_start: 833
+    //Adjusted h_sync_end: 851
+    //Adjusted htotal: 853
+
+
+/*
+    .hsync_start= 800 + 2,
+    .hsync_end	= 800 + 2 + 18,
+    .htotal		= 800 + 2 + 18 + 2, // 822
+*/
 
 // those seem to be good
     .vsync_start= 1280 + 8,
     .vsync_end	= 1280 + 8 + 4,
     .vtotal		= 1280 + 8 + 4 + 10, // 1302
 
+
     .width_mm = 170,
     .height_mm = 106,
 
-    .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
+    //.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
 };
 
 
@@ -308,7 +361,8 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0xE6, 0x02),
     COMMAND_CMD(0xE7, 0x02),
     //TE - something related with tear, but how to set?
-    COMMAND_CMD(0x35, 0x00),
+    //COMMAND_CMD(0x34, 0x00), // TE off?
+    COMMAND_CMD(0x35, 0x00), // TE on?
     CMD_DELAY(0x11, 0x00, 100),
     CMD_DELAY(0x29, 0x00, 100),
 };
@@ -360,6 +414,7 @@ static int whatever_prepare(struct drm_panel *panel)
     struct whatever_touchscreen *ctx = panel_to_ts(panel);
     struct mipi_dsi_device *dsi = ctx->dsi;
     int ret;
+    bool slow_mode;
 
     if (ctx->prepared)
         return 0;
@@ -387,6 +442,10 @@ static int whatever_prepare(struct drm_panel *panel)
 
     msleep(125);
 
+    slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
+
+    if (!slow_mode) dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
     ret = whatever_init_sequence(ctx);
     if (ret)
         return ret;
@@ -395,11 +454,14 @@ static int whatever_prepare(struct drm_panel *panel)
     if (ret)
         return ret;
 
+    if (!slow_mode) dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
     msleep(125);
 
-    ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK/*MIPI_DSI_DCS_TEAR_MODE_VHBLANK*/);
-	if (ret)
-		return ret;
+    //ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK/*MIPI_DSI_DCS_TEAR_MODE_VHBLANK*/);
+	//if (ret)
+	//	return ret;
+	//mipi_dsi_dcs_set_tear_off(ctx->dsi);
 
     ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
     if (ret)
@@ -527,6 +589,7 @@ static int whatever_get_modes(struct drm_panel *panel)
     drm_mode_set_name(mode);
 
     mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
+
     drm_mode_probed_add(panel->connector, mode);
 
     panel->connector->display_info.width_mm = mode->width_mm;
@@ -629,7 +692,9 @@ static int whatever_probe(struct mipi_dsi_device *dsi)
 
     //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_VIDEO_AUTO_VERT/*| MIPI_DSI_MODE_VSYNC_FLUSH*/;
 
-    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VSYNC_FLUSH /*| MIPI_DSI_CLOCK_NON_CONTINUOUS */ /*| MIPI_DSI_MODE_VIDEO_SYNC_PULSE*/ /*| MIPI_DSI_MODE_VIDEO_BURST*/;
+    //dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VSYNC_FLUSH /*| MIPI_DSI_CLOCK_NON_CONTINUOUS */ /*| MIPI_DSI_MODE_VIDEO_SYNC_PULSE*/ /*| MIPI_DSI_MODE_VIDEO_BURST*/;
+
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
