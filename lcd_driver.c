@@ -42,105 +42,80 @@ struct whatever_touchscreen
 
 static const struct drm_display_mode default_mode =
 {
-    .clock      = 68700, // original
-    //.clock      = 68121, // calculated for original timings
-    //.clock      = 64215, // calculated for reduced timings
-    //.clock        = 65699,
-
     .vrefresh	= 60,
-
     .hdisplay	= 800,
     .vdisplay	= 1280,
 
+    .clock      = 68700, // original, gets adjusted to 83333 by the driver (setting is in kHz)
+
+    // Original:
 /*
-	hfront-porch = <32>;
-	hsync-len = <20>;
-    hback-porch = <20>;
-
-	vfront-porch = <8>;
-	vsync-len = <4>;
-	vback-porch = <10>;
-*/
-
-    // Adjusted clock: 83333
-    // Adjusted h_sync_start: 2772
-    // Adjusted h_sync_end: 2792
-    // Adjusted htotal: 1066
-
-
     .hsync_start= 800 + 32,
     .hsync_end	= 800 + 32 + 20,
     .htotal		= 800 + 32 + 20 + 20, // 872
-
-
-// those are guessed values, this probably could be better
-
-// 1 for sync is too low - unless front porch is set to the lowest possible value, 9
-// back porch lower than 9 results in a very odd effect, as each line is moved horizontally, shaking, resulting in a fuzzy image
-
-// for front porch 9 and sync 1 the back porch seems to be either 9 or 10
-
-// setting the clock 'non continuous' for those settings results in a shaking image!
-
-/*
-    .hsync_start= 800 + 9,
-    .hsync_end	= 800 + 9 + 1,
-    .htotal		= 800 + 9 + 1 + 10,
 */
 
-    //Adjusted clock: 66666
-    //Adjusted h_sync_start: 841
-    //Adjusted h_sync_end: 843
-    //Adjusted htotal: 853
+// The one below appears to work, but needs more tests and adjustments
+// some of the settings appear to work better than others, it's harder to reproduce the tearing issue but it appears eventually, so I need to test this further
 
-/*
-    .hsync_start= 800 + 10,
-    .hsync_end	= 800 + 10 + 2,
-    .htotal		= 800 + 10 + 2 + 10,
-*/
+// Why this is odd:
+// the above says that the vertical refresh is 60. It cannot be.
 
-// this is close to the original with timings, but the clock is too low?
+// the .clock above gets adjusted by the vc4 driver (in vc4_dsi.c, vc4_dsi_encoder_mode_fixup function), the pixel clock becomes 83333 (no matter what one sets in a certain interval up to that value)
+// to 'fix' that, they adjust the horizontal timings set below, so they become:
 
-    //Adjusted clock: 66666
-    //Adjusted h_sync_start: 833
-    //Adjusted h_sync_end: 853
-    //Adjusted htotal: 873
+// Adjusted hsync_start: 1017
+// Adjusted hsync_end: 1037
+// Adjusted htotal: 1237
 
-// forcing a higher clock gets this for the same settings:
+// with this htotal, the frame rate cannot be 60
+// the pixel clock can be calculated (actually from some reasons it's higher in practice) like this:
+// horz htotal * vert htotal * 60 = 96634 kHz, which is higher than the actual adjusted pixel clock (83333)
+// this happened because I enlarged the 'back porch' while testing, over the value that overflows the pixel clock
+// max achievable by these settings is 52 Hz
 
-    // Adjusted clock: 83333
-    // Adjusted h_sync_start: 988 - very late! Is this a problem?
-    // Adjusted h_sync_end: 1008 - sync length 20 as needed
-    // Adjusted htotal: 1028 - back porch 20 as needed
+// this can be tuned in two ways:
+// - adjust the clock - they keep the 'back porch' and 'sync' lengths as set, so they insert more in the front porch - increasing the clock value will result in decreasing the hsync start and getting a better fps
+// - adjust the back porch - decreasing that value also results in higher fps possible
 
-    /*
-    .hsync_start= 800 + 1,
-    .hsync_end	= 800 + 1 + 20,
-    .htotal		= 800 + 1 + 20 + 20, // 841
-    */
-
-    //Adjusted clock: 66666
-    //Adjusted h_sync_start: 833
-    //Adjusted h_sync_end: 851
-    //Adjusted htotal: 853
+// adjusting both of them could result in something that the panel 'likes' and have a higher fps without that ugly tearing
 
 
-/*
-    .hsync_start= 800 + 2,
-    .hsync_end	= 800 + 2 + 18,
-    .htotal		= 800 + 2 + 18 + 2, // 822
-*/
+#define SYNC_LEN 20
 
-// those seem to be good
+    .hsync_start= 800 + 0, // zero gets adjusted to a bigger value
+    .hsync_end	= 800 + 0 + SYNC_LEN,
+    .htotal		= 800 + 0 + SYNC_LEN + 200,
+
+
+// those seem to be good, do not touch!
     .vsync_start= 1280 + 8,
     .vsync_end	= 1280 + 8 + 4,
     .vtotal		= 1280 + 8 + 4 + 10, // 1302
 
-
     .width_mm = 170,
     .height_mm = 106,
 
-    //.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
+
+
+    //these settings seem to be good for 30 fps (might need some more adjustments):
+/*
+    .clock      = 33500, // calculated would be 32108
+    .vrefresh	= 30,
+
+    .hdisplay	= 800,
+    .vdisplay	= 1280,
+
+    .hsync_start= 800 + 10,
+    .hsync_end	= 800 + 10 + 2,
+    .htotal		= 800 + 10 + 2 + 10, // 822
+
+    .vsync_start= 1280 + 8,
+    .vsync_end	= 1280 + 8 + 4,
+    .vtotal		= 1280 + 8 + 4 + 10, // 1302
+*/
+
+//  .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
 };
 
 
@@ -192,7 +167,8 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x2D, 0x03),
 
     SWITCH_PAGE_CMD(1),
-    COMMAND_CMD(0x00, 0x00),//Set VCOM
+    //Set VCOM
+    COMMAND_CMD(0x00, 0x00),
     COMMAND_CMD(0x01, 0x6F),
     //Set Gamma Power);W_D( VGMP);W_D(VGMN);W_D(VGSP);W_D(VGSN)
     COMMAND_CMD(0x17, 0x00),
@@ -266,6 +242,7 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x80, 0x1C),
     COMMAND_CMD(0x81, 0x08),
     COMMAND_CMD(0x82, 0x02),
+
     SWITCH_PAGE_CMD(2),//for GIP
     //GIP_L Pin mapping
     COMMAND_CMD(0x00, 0x00),
@@ -353,7 +330,8 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x7C, 0x00),
     COMMAND_CMD(0x7D, 0x03),
     COMMAND_CMD(0x7E, 0x7B),
-    COMMAND_CMD(0xE0, 0x04),
+
+    SWITCH_PAGE_CMD(4),
     COMMAND_CMD(0x2B, 0x2B),
     COMMAND_CMD(0x2E, 0x44),
 
@@ -384,10 +362,12 @@ static int send_cmd_data(struct whatever_touchscreen *ctx, u8 cmd, u8 data)
     return 0;
 }
 
+/*
 static int switch_page(struct whatever_touchscreen *ctx, u8 page)
 {
     return send_cmd_data(ctx, 0xE0, page);
 }
+*/
 
 static int whatever_init_sequence(struct whatever_touchscreen *ctx)
 {
@@ -450,9 +430,9 @@ static int whatever_prepare(struct drm_panel *panel)
     if (ret)
         return ret;
 
-    ret = switch_page(ctx, 0);
-    if (ret)
-        return ret;
+    //ret = switch_page(ctx, 0);
+    //if (ret)
+    //    return ret;
 
     if (!slow_mode) dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
 
