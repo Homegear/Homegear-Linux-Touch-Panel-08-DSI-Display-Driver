@@ -42,14 +42,15 @@ struct whatever_touchscreen
 
 static const struct drm_display_mode default_mode =
 {
-    .vrefresh	= 60,
+
     .hdisplay	= 800,
     .vdisplay	= 1280,
 
-    .clock      = 68700, // original, gets adjusted to 83333 by the driver (setting is in kHz)
-
     // Original:
 /*
+    .vrefresh	= 60,
+    .clock      = 68700, // original, gets adjusted to 83333 by the driver (setting is in kHz)
+
     .hsync_start= 800 + 32,
     .hsync_end	= 800 + 32 + 20,
     .htotal		= 800 + 32 + 20 + 20, // 872
@@ -80,13 +81,67 @@ static const struct drm_display_mode default_mode =
 
 // adjusting both of them could result in something that the panel 'likes' and have a higher fps without that ugly tearing
 
+// Note: the comment above is for back porch 200 - for this value I could still get issues (not easy)
+// apparently for now it can be made to work for 50 fps or even 55 without 'tricks'...
 
+// I looked over the vc4 sources for htotal, it is used only in vc4_dsi.c and vc4_crtc.c
+// in the first it's only adjusted in vc4_dsi_encoder_mode_fixup and that's it
+// I think the key to this is in vc4_crtc_config_pv function from vc4_crtc.c
+// I still have no idea what that does (configures the 'pixel valves'?)
+// there is one single relevant call in there which uses htotal...
+
+    .vrefresh   = 60,
+    .clock      = 68700, // original, gets adjusted to 83333 by the driver (setting is in kHz)
+
+#define FRONT_PORCH 0
 #define SYNC_LEN 20
 
-    .hsync_start= 800 + 0, // zero gets adjusted to a bigger value
-    .hsync_end	= 800 + 0 + SYNC_LEN,
-    .htotal		= 800 + 0 + SYNC_LEN + 200,
+    .hsync_start= 800 + FRONT_PORCH, // zero gets adjusted to a bigger value
+    .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
+    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 250,
 
+
+// settings relatively good for 55 fps
+
+/*
+    .vrefresh   = 55,
+// needed at least 60,868
+    .clock      = 60868 + 1550, // gets adjusted to 66666
+
+#define FRONT_PORCH 10
+#define SYNC_LEN 20
+
+    .hsync_start= 800 + FRONT_PORCH,
+    .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
+    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 20, // 850
+*/
+
+// settings good for 50 fps
+
+/*
+    .clock      = 54700, // gets adjusted to 66666
+
+#define FRONT_PORCH 10
+#define SYNC_LEN 20
+
+    .hsync_start= 800 + FRONT_PORCH,
+    .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
+    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 20, // 850
+*/
+
+    //these settings seem to be good for 30 fps (might need some more adjustments):
+
+/*
+    .clock      = 33500, // calculated would be 32108
+    .vrefresh	= 30,
+
+    .hdisplay	= 800,
+    .vdisplay	= 1280,
+
+    .hsync_start= 800 + 10,
+    .hsync_end	= 800 + 10 + 4,
+    .htotal		= 800 + 10 + 4 + 10, // 822
+*/
 
 // those seem to be good, do not touch!
     .vsync_start= 1280 + 8,
@@ -96,26 +151,7 @@ static const struct drm_display_mode default_mode =
     .width_mm = 170,
     .height_mm = 106,
 
-
-
-    //these settings seem to be good for 30 fps (might need some more adjustments):
-/*
-    .clock      = 33500, // calculated would be 32108
-    .vrefresh	= 30,
-
-    .hdisplay	= 800,
-    .vdisplay	= 1280,
-
-    .hsync_start= 800 + 10,
-    .hsync_end	= 800 + 10 + 2,
-    .htotal		= 800 + 10 + 2 + 10, // 822
-
-    .vsync_start= 1280 + 8,
-    .vsync_end	= 1280 + 8 + 4,
-    .vtotal		= 1280 + 8 + 4 + 10, // 1302
-*/
-
-//  .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
+    .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
 };
 
 
@@ -362,12 +398,12 @@ static int send_cmd_data(struct whatever_touchscreen *ctx, u8 cmd, u8 data)
     return 0;
 }
 
-/*
+
 static int switch_page(struct whatever_touchscreen *ctx, u8 page)
 {
     return send_cmd_data(ctx, 0xE0, page);
 }
-*/
+
 
 static int whatever_init_sequence(struct whatever_touchscreen *ctx)
 {
@@ -430,17 +466,17 @@ static int whatever_prepare(struct drm_panel *panel)
     if (ret)
         return ret;
 
-    //ret = switch_page(ctx, 0);
-    //if (ret)
-    //    return ret;
+    ret = switch_page(ctx, 0);
+    if (ret)
+        return ret;
 
     if (!slow_mode) dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
 
     msleep(125);
 
-    //ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK/*MIPI_DSI_DCS_TEAR_MODE_VHBLANK*/);
-	//if (ret)
-	//	return ret;
+    ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK/*MIPI_DSI_DCS_TEAR_MODE_VHBLANK*/);
+	if (ret)
+		return ret;
 	//mipi_dsi_dcs_set_tear_off(ctx->dsi);
 
     ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
@@ -674,7 +710,7 @@ static int whatever_probe(struct mipi_dsi_device *dsi)
 
     //dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VSYNC_FLUSH /*| MIPI_DSI_CLOCK_NON_CONTINUOUS */ /*| MIPI_DSI_MODE_VIDEO_SYNC_PULSE*/ /*| MIPI_DSI_MODE_VIDEO_BURST*/;
 
-    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VSYNC_FLUSH | MIPI_DSI_MODE_VIDEO_HFP | MIPI_DSI_MODE_VIDEO_HSA | MIPI_DSI_MODE_VIDEO_HBP | MIPI_DSI_MODE_VIDEO_BURST;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
