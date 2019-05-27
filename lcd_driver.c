@@ -90,23 +90,24 @@ static const struct drm_display_mode default_mode =
 // I still have no idea what that does (configures the 'pixel valves'?)
 // there is one single relevant call in there which uses htotal...
 
+
     .vrefresh   = 60,
     .clock      = 68700, // original, gets adjusted to 83333 by the driver (setting is in kHz)
+    //.clock      = 83333,
 
 #define FRONT_PORCH 0
 #define SYNC_LEN 20
 
     .hsync_start= 800 + FRONT_PORCH, // zero gets adjusted to a bigger value
     .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
-    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 250,
+    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 220,
 
 
 // settings relatively good for 55 fps
-
 /*
     .vrefresh   = 55,
 // needed at least 60,868
-    .clock      = 60868 + 1550, // gets adjusted to 66666
+    .clock      = 60868 + 1450, // gets adjusted to 66666
 
 #define FRONT_PORCH 10
 #define SYNC_LEN 20
@@ -129,29 +130,16 @@ static const struct drm_display_mode default_mode =
     .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 20, // 850
 */
 
-    //these settings seem to be good for 30 fps (might need some more adjustments):
-
-/*
-    .clock      = 33500, // calculated would be 32108
-    .vrefresh	= 30,
-
-    .hdisplay	= 800,
-    .vdisplay	= 1280,
-
-    .hsync_start= 800 + 10,
-    .hsync_end	= 800 + 10 + 4,
-    .htotal		= 800 + 10 + 4 + 10, // 822
-*/
-
 // those seem to be good, do not touch!
     .vsync_start= 1280 + 8,
     .vsync_end	= 1280 + 8 + 4,
     .vtotal		= 1280 + 8 + 4 + 10, // 1302
 
+
     .width_mm = 170,
     .height_mm = 106,
 
-    .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
+    //.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
 };
 
 
@@ -474,9 +462,9 @@ static int whatever_prepare(struct drm_panel *panel)
 
     msleep(125);
 
-    ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK/*MIPI_DSI_DCS_TEAR_MODE_VHBLANK*/);
-	if (ret)
-		return ret;
+    //ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK/*MIPI_DSI_DCS_TEAR_MODE_VHBLANK*/);
+	//if (ret)
+	//	return ret;
 	//mipi_dsi_dcs_set_tear_off(ctx->dsi);
 
     ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
@@ -710,7 +698,7 @@ static int whatever_probe(struct mipi_dsi_device *dsi)
 
     //dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VSYNC_FLUSH /*| MIPI_DSI_CLOCK_NON_CONTINUOUS */ /*| MIPI_DSI_MODE_VIDEO_SYNC_PULSE*/ /*| MIPI_DSI_MODE_VIDEO_BURST*/;
 
-    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VSYNC_FLUSH | MIPI_DSI_MODE_VIDEO_HFP | MIPI_DSI_MODE_VIDEO_HSA | MIPI_DSI_MODE_VIDEO_HBP | MIPI_DSI_MODE_VIDEO_BURST;
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
