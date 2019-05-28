@@ -48,7 +48,7 @@ static const struct drm_display_mode default_mode =
 
     // Original:
 /*
-    .vrefresh	= 60,
+    .vrefresh	= 60, // this is not used in a 'functional' way
     .clock      = 68700, // original, gets adjusted to 83333 by the driver (setting is in kHz)
 
     .hsync_start= 800 + 32,
@@ -91,7 +91,7 @@ static const struct drm_display_mode default_mode =
 // there is one single relevant call in there which uses htotal...
 
 
-    .vrefresh   = 60,
+    .vrefresh   = 60, // this is not used in a 'functional' way
     .clock      = 68700, // original, gets adjusted to 83333 by the driver (setting is in kHz)
     //.clock      = 83333,
 
@@ -100,35 +100,7 @@ static const struct drm_display_mode default_mode =
 
     .hsync_start= 800 + FRONT_PORCH, // zero gets adjusted to a bigger value
     .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
-    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 220,
-
-
-// settings relatively good for 55 fps
-/*
-    .vrefresh   = 55,
-// needed at least 60,868
-    .clock      = 60868 + 1450, // gets adjusted to 66666
-
-#define FRONT_PORCH 10
-#define SYNC_LEN 20
-
-    .hsync_start= 800 + FRONT_PORCH,
-    .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
-    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 20, // 850
-*/
-
-// settings good for 50 fps
-
-/*
-    .clock      = 54700, // gets adjusted to 66666
-
-#define FRONT_PORCH 10
-#define SYNC_LEN 20
-
-    .hsync_start= 800 + FRONT_PORCH,
-    .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
-    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 20, // 850
-*/
+    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 230,
 
 // those seem to be good, do not touch!
     .vsync_start= 1280 + 8,
@@ -139,7 +111,7 @@ static const struct drm_display_mode default_mode =
     .width_mm = 170,
     .height_mm = 106,
 
-    //.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
+    .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC /*| DRM_MODE_FLAG_CLKDIV2*/, // in vc4_dsi or vc4_crtc, the div2 flag does not make a difference, but does it elsewhere?
 };
 
 
@@ -662,6 +634,8 @@ static int whatever_probe(struct mipi_dsi_device *dsi)
 
 
 /* DSI mode flags */
+
+// many of them seem to not have any effect in vc4 driver!
 
 /* video mode */
 //#define MIPI_DSI_MODE_VIDEO		BIT(0)
