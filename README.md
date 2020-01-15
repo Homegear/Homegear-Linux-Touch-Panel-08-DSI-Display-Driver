@@ -3,7 +3,7 @@
 ### Kernel source
 
 Just clone the rpi-4.19.y branch from here: https://github.com/raspberrypi/linux
-It might work with older kernel versions but I've seen reports of ugly bugs in them which were solved (as serious memory leak in the vc4 driver), so we better stick with this version (or later).
+It might work with older kernel versions but I've seen reports of ugly bugs in them which were solved (such as a serious memory leak in the vc4 driver), so we better stick with this version (or later).
 I provided a couple of 'sh' files in the 'kernel' directory, just copy them in the linux directory, run 'build_config.sh' then 'build.sh' after having cross compiling set up and it should build and install the kernel.
 I have set the following building structure, if different some scripts will need to be changed:
 
@@ -80,8 +80,8 @@ If we need some customization for the touch driver, here is a script that can ge
 
 0 and 1 pins need to be connected as they were, that's 'standard' stuff.
 
-I changed things a little, 2 is here connected to the reset for display and 7 for touch reset. I used 6 for touch INT. 
-Those can be changed, of course, but if changed, the overlay must be changed.
+I changed things a little, 13 is here connected to the reset for display and 16 for touch reset. I used 17 for touch INT. 
+Those can be changed, of course, but if changed, the overlay and perhaps the device source (reset can be overriden in overlay, but I guess making the chosen variant as a default wouldn't hurt) must be changed.
 
 ### Configuration
 
