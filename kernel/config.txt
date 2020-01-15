@@ -11,8 +11,10 @@
 
 #gpio=0-1=a0,dl
 
-gpio=2=op,dh
-gpio=7=op,dh
+# don't need to set any of those, unless there is something that tries to 'steal' them
+#gpio=13=op,dh
+#gpio=16=op,dl
+#gpio=17=op,dh
 
 #dtparam=i2c_vc=on
 #dtparam=i2c=on

@@ -20,7 +20,7 @@
 
 #include <linux/gpio.h>
 
-#define DEFAULT_GPIO_RESET_PIN 2
+#define DEFAULT_GPIO_RESET_PIN 13
 
 struct whatever_touchscreen
 {

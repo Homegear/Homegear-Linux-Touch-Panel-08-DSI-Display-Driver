@@ -7,7 +7,7 @@ if ! test -e ../linux/.config; then
 	exit 1
 fi
 
-export VERSION="4.19.40-v7+"
+export VERSION="4.19.95-v7+"
 export CPATH=../linux/include
 
 if grep -q CONFIG_ARM64=y ../linux/.config; then

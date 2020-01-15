@@ -55,17 +55,17 @@ Just run the two sh scripts in the panel directory (after having the kernel comp
 ### Installing the driver
 
 Remove the contents of overlay directory on cm3 device from /boot. 
-Copy the overlay files from chroot/boot/dtbs/4.19.40-v7+/overlays in /boot/overlays. 
-Copy the chroot/boot/dtbs/4.19.40-v7+/*.dtb on the device in /boot
+Copy the overlay files from chroot/boot/dtbs/4.19.95-v7+/overlays in /boot/overlays. 
+Copy the chroot/boot/dtbs/4.19.95-v7+/*.dtb on the device in /boot
 
 Copy the panel overlay (currently lcd_driver.dtbo) from panel directory in /boot/overlays.
 Copy System.map-4.19... config-4.19... vmlinuz-4.19... and kernel7.img from chroot/boot on the device in /boot.
 
-Copy the modules directory from chroot/lib/modules/4.19.40-v7+ on the device in /lib/modules/4.19.40-v7+
+Copy the modules directory from chroot/lib/modules/4.19.95-v7+ on the device in /lib/modules/4.19.95-v7+
 
-By the way, 40 is what I have here, probably now it's higher.
+By the way, 95 is the latest tested, it could be higher.
 
-Copy the lcd_driver.ko from the panel directory, on the device in /lib/modules/4.19.40-v7+
+Copy the lcd_driver.ko from the panel directory, on the device in /lib/modules/4.19.95-v7+
 
 Copy config.txt I povided in kernel directory, over the one existing on the device in /boot
 
