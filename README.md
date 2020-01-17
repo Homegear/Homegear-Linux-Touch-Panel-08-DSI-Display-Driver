@@ -42,11 +42,12 @@ Some more info is here: https://www.raspberrypi.org/documentation/hardware/compu
 ### Firmware
 
 Firmware, if needed, is here: https://github.com/raspberrypi/firmware
-I tested with both the current firmware and the 'next' branch, fkms does not work with any of them (yet?). 
+I tested with both the current firmware and the 'next' branch, fkms does not work with any of them (yet?).
 kms works with both, because it's a 'full' driver.
 
 For the 'official' panel they recommend installing the 'blob' bin, here: https://www.raspberrypi.org/documentation/hardware/computemodule/cmio-display.md
 I think the goal is to change the default behaviour of 0 and 1 pins, which can also be done in config.txt. Here is some more info about that: https://www.raspberrypi.org/documentation/configuration/pin-configuration.md
+For raspbian buster I didn't need to install it.
 
 ### Compiling the panel driver and dts
 
@@ -54,12 +55,14 @@ Just run the two sh scripts in the panel directory (after having the kernel comp
 
 ### Installing the driver
 
-Remove the contents of overlay directory on cm3 device from /boot. 
-Copy the overlay files from chroot/boot/dtbs/4.19.95-v7+/overlays in /boot/overlays. 
+Remove the contents of overlay directory on cm3 device from /boot.
+Copy the overlay files from chroot/boot/dtbs/4.19.95-v7+/overlays in /boot/overlays.
 Copy the chroot/boot/dtbs/4.19.95-v7+/*.dtb on the device in /boot
 
 Copy the panel overlay (currently lcd_driver.dtbo) from panel directory in /boot/overlays.
+
 Copy System.map-4.19... config-4.19... vmlinuz-4.19... and kernel7.img from chroot/boot on the device in /boot.
+Note: At least for Buster, it boots fine without System.map-4.19..., config-4.19... and vmlinuz-4.19... files, of course, kernel7.img is still needed.
 
 Copy the modules directory from chroot/lib/modules/4.19.95-v7+ on the device in /lib/modules/4.19.95-v7+
 
@@ -80,7 +83,7 @@ If we need some customization for the touch driver, here is a script that can ge
 
 0 and 1 pins need to be connected as they were, that's 'standard' stuff.
 
-I changed things a little, 13 is here connected to the reset for display and 16 for touch reset. I used 17 for touch INT. 
+I changed things a little, 13 is here connected to the reset for display and 16 for touch reset. I used 17 for touch INT.
 Those can be changed, of course, but if changed, the overlay and perhaps the device source (reset can be overriden in overlay, but I guess making the chosen variant as a default wouldn't hurt) must be changed.
 
 ### Configuration
@@ -89,12 +92,12 @@ There are things that can be changed in the overlay - the used pins. Some genera
 
 https://www.raspberrypi.org/documentation/configuration/device-tree.md
 
-Some things can be changed for the touch part by using the 'firmware' mentioned above. 
+Some things can be changed for the touch part by using the 'firmware' mentioned above.
 There are of course some things that can be changed/added either in kernel start line or config.txt or other configuration files, but there is one thing that I found during tests that is not strwaightforward.
 By default, the desktop starts in portrait mode. If you want to rotate it in landscape mode, do not use the usual method of rotating the screen in config.txt, it might prevent booting up.
 After the X desktop is started, it can be rotated with these commands:
 
-Screen: 
+Screen:
 
 `xrandr --output DSI-1 --rotate left`
 

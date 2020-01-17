@@ -97,10 +97,11 @@ static const struct drm_display_mode default_mode =
 
 #define FRONT_PORCH 0
 #define SYNC_LEN 20
+#define BACK_PORCH 230
 
     .hsync_start= 800 + FRONT_PORCH, // zero gets adjusted to a bigger value
     .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
-    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + 230,
+    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + BACK_PORCH,
 
 // those seem to be good, do not touch!
     .vsync_start= 1280 + 8,
