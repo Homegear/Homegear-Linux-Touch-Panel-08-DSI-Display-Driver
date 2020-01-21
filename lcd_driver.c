@@ -22,7 +22,7 @@
 
 #define DEFAULT_GPIO_RESET_PIN 13
 
-struct whatever_touchscreen
+struct HG_LTP08_touchscreen
 {
     struct drm_panel base;
     struct mipi_dsi_device *dsi;
@@ -116,9 +116,9 @@ static const struct drm_display_mode default_mode =
 };
 
 
-static struct whatever_touchscreen *panel_to_ts(struct drm_panel *panel)
+static struct HG_LTP08_touchscreen *panel_to_ts(struct drm_panel *panel)
 {
-    return container_of(panel, struct whatever_touchscreen, base);
+    return container_of(panel, struct HG_LTP08_touchscreen, base);
 }
 
 struct panel_command
@@ -343,7 +343,7 @@ static const struct panel_command panel_cmds_init[] =
 };
 
 
-static int send_cmd_data(struct whatever_touchscreen *ctx, u8 cmd, u8 data)
+static int send_cmd_data(struct HG_LTP08_touchscreen *ctx, u8 cmd, u8 data)
 {
     u8 buf[2] = { cmd, data };
     int ret;
@@ -360,13 +360,13 @@ static int send_cmd_data(struct whatever_touchscreen *ctx, u8 cmd, u8 data)
 }
 
 
-static int switch_page(struct whatever_touchscreen *ctx, u8 page)
+static int switch_page(struct HG_LTP08_touchscreen *ctx, u8 page)
 {
     return send_cmd_data(ctx, 0xE0, page);
 }
 
 
-static int whatever_init_sequence(struct whatever_touchscreen *ctx)
+static int HG_LTP08_init_sequence(struct HG_LTP08_touchscreen *ctx)
 {
     int i, ret;
 
@@ -386,9 +386,9 @@ static int whatever_init_sequence(struct whatever_touchscreen *ctx)
 }
 
 
-static int whatever_prepare(struct drm_panel *panel)
+static int HG_LTP08_prepare(struct drm_panel *panel)
 {
-    struct whatever_touchscreen *ctx = panel_to_ts(panel);
+    struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
     struct mipi_dsi_device *dsi = ctx->dsi;
     int ret;
     bool slow_mode;
@@ -423,7 +423,7 @@ static int whatever_prepare(struct drm_panel *panel)
 
     if (!slow_mode) dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-    ret = whatever_init_sequence(ctx);
+    ret = HG_LTP08_init_sequence(ctx);
     if (ret)
         return ret;
 
@@ -462,9 +462,9 @@ static int whatever_prepare(struct drm_panel *panel)
 }
 
 
-static int whatever_unprepare(struct drm_panel *panel)
+static int HG_LTP08_unprepare(struct drm_panel *panel)
 {
-    struct whatever_touchscreen *ctx = panel_to_ts(panel);
+    struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
     struct mipi_dsi_device *dsi = ctx->dsi;
     int ret;
 
@@ -494,9 +494,9 @@ static int whatever_unprepare(struct drm_panel *panel)
 }
 
 
-static int whatever_enable(struct drm_panel *panel)
+static int HG_LTP08_enable(struct drm_panel *panel)
 {
-    struct whatever_touchscreen *ctx = panel_to_ts(panel);
+    struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
 
     if (ctx->enabled)
         return 0;
@@ -522,9 +522,9 @@ static int whatever_enable(struct drm_panel *panel)
     return 0;
 }
 
-static int whatever_disable(struct drm_panel *panel)
+static int HG_LTP08_disable(struct drm_panel *panel)
 {
-    struct whatever_touchscreen *ctx = panel_to_ts(panel);
+    struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
 
     if (!ctx->enabled)
         return 0;
@@ -549,7 +549,7 @@ static int whatever_disable(struct drm_panel *panel)
 }
 
 
-static int whatever_get_modes(struct drm_panel *panel)
+static int HG_LTP08_get_modes(struct drm_panel *panel)
 {
     static const u32 bus_format = MEDIA_BUS_FMT_RGB888_1X24;
     struct drm_display_mode *mode;
@@ -580,31 +580,31 @@ static int whatever_get_modes(struct drm_panel *panel)
 }
 
 /*
-static void whatever_panel_shutdown(struct device *dev)
+static void HG_LTP08_panel_shutdown(struct device *dev)
 {
 	struct drm_panel *panel = dev_get_drvdata(dev);
 
-	whatever_disable(panel);
+	HG_LTP08_disable(panel);
 }
 */
 
 
-static const struct drm_panel_funcs whatever_drm_funcs =
+static const struct drm_panel_funcs HG_LTP08_drm_funcs =
 {
-    .disable = whatever_disable,
-    .unprepare = whatever_unprepare,
-    .prepare = whatever_prepare,
-    .enable = whatever_enable,
-    .get_modes = whatever_get_modes,
+    .disable = HG_LTP08_disable,
+    .unprepare = HG_LTP08_unprepare,
+    .prepare = HG_LTP08_prepare,
+    .enable = HG_LTP08_enable,
+    .get_modes = HG_LTP08_get_modes,
 };
 
-static int whatever_probe(struct mipi_dsi_device *dsi)
+static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
 {
     int ret;
     const __be32 *prop;
 
     struct device *dev = &dsi->dev;
-    struct whatever_touchscreen *ctx;
+    struct HG_LTP08_touchscreen *ctx;
 
     printk(KERN_ALERT "Probing!\n");
 
@@ -680,7 +680,7 @@ static int whatever_probe(struct mipi_dsi_device *dsi)
     drm_panel_init(&ctx->base);
 
     ctx->base.dev = dev;
-    ctx->base.funcs = &whatever_drm_funcs;
+    ctx->base.funcs = &HG_LTP08_drm_funcs;
 
     ret = drm_panel_add(&ctx->base);
     if (ret < 0)
@@ -707,9 +707,9 @@ static int whatever_probe(struct mipi_dsi_device *dsi)
     return 0;
 }
 
-static int whatever_remove(struct mipi_dsi_device *dsi)
+static int HG_LTP08_remove(struct mipi_dsi_device *dsi)
 {
-    struct whatever_touchscreen *ctx = mipi_dsi_get_drvdata(dsi);
+    struct HG_LTP08_touchscreen *ctx = mipi_dsi_get_drvdata(dsi);
 
     mipi_dsi_detach(dsi);
     drm_panel_remove(&ctx->base);
@@ -722,40 +722,40 @@ static int whatever_remove(struct mipi_dsi_device *dsi)
 }
 
 /*
-static void whatever_shutdown(struct mipi_dsi_device *dsi)
+static void HG_LTP08_shutdown(struct mipi_dsi_device *dsi)
 {
     struct device *dev;
 
     printk(KERN_ALERT "Shutdown!\n");
 
     dev = &dsi->dev;
-	whatever_panel_shutdown(dev);
+	HG_LTP08_panel_shutdown(dev);
 }
 */
 
 
-static const struct of_device_id whatever_touchscreen_of_match[] =
+static const struct of_device_id HG_LTP08_touchscreen_of_match[] =
 {
-    { .compatible = "divus,whatever" },
+    { .compatible = "HG_LTP08" },
     { }
 };
-MODULE_DEVICE_TABLE(of, whatever_touchscreen_of_match);
+MODULE_DEVICE_TABLE(of, HG_LTP08_touchscreen_of_match);
 
 
 
-static struct mipi_dsi_driver panel_whatever_dsi_driver =
+static struct mipi_dsi_driver panel_HG_LTP08_dsi_driver =
 {
     .driver = {
-        .name = "panel_divus_whatever",
-        .of_match_table = whatever_touchscreen_of_match,
+        .name = "panel_HG_LTP08",
+        .of_match_table = HG_LTP08_touchscreen_of_match,
     },
-    .probe = whatever_probe,
-    .remove = whatever_remove,
-//	.shutdown = whatever_shutdown,
+    .probe = HG_LTP08_probe,
+    .remove = HG_LTP08_remove,
+//	.shutdown = HG_LTP08_shutdown,
 };
-module_mipi_dsi_driver(panel_whatever_dsi_driver);
+module_mipi_dsi_driver(panel_HG_LTP08_dsi_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
-MODULE_DESCRIPTION("Some test driver for a DSI panel");
-MODULE_VERSION("0.01");
+MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; schwarz; WXGA 1280x800; Linux");
+MODULE_VERSION("1.0");

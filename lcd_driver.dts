@@ -24,9 +24,9 @@
             };
 
             panel_test: panel@0 {
-                compatible = "divus,whatever";
+                compatible = "HG_LTP08";
                 reg=<0>;
-                label= "test_display";
+                label= "Homegear LTP08 Multitouch 8\" Display";
                 vc4_dsi = <&dsi1>;
                 reset = <13>;
                 port {

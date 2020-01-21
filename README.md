@@ -59,7 +59,7 @@ Remove the contents of overlay directory on cm3 device from /boot.
 Copy the overlay files from chroot/boot/dtbs/4.19.95-v7+/overlays in /boot/overlays.
 Copy the chroot/boot/dtbs/4.19.95-v7+/*.dtb on the device in /boot
 
-Copy the panel overlay (currently lcd_driver.dtbo) from panel directory in /boot/overlays.
+Copy the panel overlay (currently HG_LTP08_lcd_driver.dtbo) from panel directory in /boot/overlays.
 
 Copy System.map-4.19... config-4.19... vmlinuz-4.19... and kernel7.img from chroot/boot on the device in /boot.
 Note: At least for Buster, it boots fine without System.map-4.19..., config-4.19... and vmlinuz-4.19... files, of course, kernel7.img is still needed.
