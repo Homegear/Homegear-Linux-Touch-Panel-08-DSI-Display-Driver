@@ -121,7 +121,7 @@ I managed to make dkms working, for now installation is 'manual' (later some pac
 - build it with: `dkms build -m HG_LTP08 -v 1.0'
 - install it with: `dkms install -m HG_LTP08 -v 1.0`
 
-After this, simply rebooting should make the driver work. In also needs the lines in config.txt and the dtbo file mentioned above to be installed.
+After this, simply rebooting should make the driver work. It also needs the lines in config.txt and the dtbo file mentioned above to be installed.
 
 The module can be removed from dkms with:
 `dkms remove -m HG_LTP08 -v 1.0`
