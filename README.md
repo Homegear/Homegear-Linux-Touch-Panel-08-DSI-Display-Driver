@@ -51,6 +51,8 @@ For raspbian buster I didn't need to install it.
 
 ### Compiling the panel driver and dts
 
+Note: This info is obsolete, the dkms solution will be used, but I leave it here just in case.
+
 Just run the two sh scripts in the panel directory (after having the kernel compiled, of course) and they should generate the ko file (the module) and the dtbo file (the overlay).
 
 ### Installing the driver
@@ -60,6 +62,7 @@ Copy the overlay files from chroot/boot/dtbs/4.19.95-v7+/overlays in /boot/overl
 Copy the chroot/boot/dtbs/4.19.95-v7+/*.dtb on the device in /boot
 
 Copy the panel overlay (currently HG_LTP08_lcd_driver.dtbo) from panel directory in /boot/overlays.
+This is actually the only way you have to do if the 'official' kernel is used and dkms.
 
 Copy System.map-4.19... config-4.19... vmlinuz-4.19... and kernel7.img from chroot/boot on the device in /boot.
 Note: At least for Buster, it boots fine without System.map-4.19..., config-4.19... and vmlinuz-4.19... files, of course, kernel7.img is still needed.
@@ -104,3 +107,21 @@ Screen:
 This will rotate only the screen, but not the touch input. To also rotate the touch input, use:
 
 `xinput --set-prop 6 132 0 -1 1 1 0 0 0 0 1`
+
+### DKMS
+
+I managed to make dkms working, for now installation is 'manual':
+
+- make a /usr/src/HG_LTP08-1.0 directory
+- copy there the Makefile, dkms.conf and lcd_driver.c files
+
+- add the module to dkms with: `dkms add -m HG_LTP08 -v 1.0`
+- build it with: `dkms build -m HG_LTP08 -v 1.0'
+- install it with: `dkms install -m HG_LTP08 -v 1.0`
+
+After this, simply rebooting should make the driver work. In also needs the lines in config.txt and the dtbo file mentioned above to be installed.
+
+The module can be removed from dkms with:
+`dkms remove -m HG_LTP08 -v 1.0`
+
+Note: a kernel version can be specified for dkms with -k if building/installing for some other kernel version.
