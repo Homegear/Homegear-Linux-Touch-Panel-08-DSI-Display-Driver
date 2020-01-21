@@ -57,14 +57,14 @@ Just run the two sh scripts in the panel directory (after having the kernel comp
 
 ### Installing the driver
 
-Note: This info is obsolete, except the overlay file copying and the config.txt, the dkms solution will be used, but I leave it here just in case.
+Note: This info is obsolete, except the overlay file copying and the config.txt, now the dkms solution will be used, but I leave it here just in case.
 
 Remove the contents of overlay directory on cm3 device from /boot.
 Copy the overlay files from chroot/boot/dtbs/4.19.95-v7+/overlays in /boot/overlays.
 Copy the chroot/boot/dtbs/4.19.95-v7+/*.dtb on the device in /boot
 
 Copy the panel overlay (currently HG_LTP08_lcd_driver.dtbo) from panel directory in /boot/overlays.
-This is actually the only thing you have to do if the 'official' kernel is used and dkms, and the changing of the config.txt file.
+This and copying config.txt is actually the only thing you have to do if the 'official' kernel is used with dkms.
 
 Copy System.map-4.19... config-4.19... vmlinuz-4.19... and kernel7.img from chroot/boot on the device in /boot.
 Note: At least for Buster, it boots fine without System.map-4.19..., config-4.19... and vmlinuz-4.19... files, of course, kernel7.img is still needed.
