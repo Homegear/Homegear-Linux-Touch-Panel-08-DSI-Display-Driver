@@ -112,18 +112,41 @@ This will rotate only the screen, but not the touch input. To also rotate the to
 
 ### DKMS
 
-I managed to make dkms working, for now installation is 'manual' (later some packaging method could be used):
+
+###### Manual installation
+
+I managed to make dkms working:
 
 - make a /usr/src/HG_LTP08-1.0 directory
 - copy there the Makefile, dkms.conf and lcd_driver.c files
 
 - add the module to dkms with: `dkms add -m HG_LTP08 -v 1.0`
-- build it with: `dkms build -m HG_LTP08 -v 1.0'
+- build it with: `dkms build -m HG_LTP08 -v 1.0`
 - install it with: `dkms install -m HG_LTP08 -v 1.0`
+
+Apparently only 'install' might be needed.
 
 After this, simply rebooting should make the driver work. It also needs the lines in config.txt and the dtbo file mentioned above to be installed.
 
-The module can be removed from dkms with:
-`dkms remove -m HG_LTP08 -v 1.0`
+The module can be uninstalled with:
+`dkms uninstall -m HG_LTP08 -v 1.0`
+and removed with (no need to uninstall it first):
+`dkms remove HG_LTP08/1.0 --all`
+
 
 Note: a kernel version can be specified for dkms with -k if building/installing for some other kernel version.
+
+###### Using a package
+
+Building a deb package:
+
+Just run the `build_deb.sh` script.
+A deb file will be created, that should be copied on the device.
+
+Installing on the device:
+
+`apt install ./hgltp08_1.0_all.deb`
+
+Removing:
+
+`apt remove hgltp08`

@@ -1,0 +1,9 @@
+Source: hgltp08
+Priority: optional
+Maintainer: Sathya Laufer <sathya@laufers.net>
+Build-Depends: debhelper (>= 10)
+
+Package: hgltp08
+Architecture: all
+Depends:
+Description: DKMS source for HG_LTP08 lcd driver
