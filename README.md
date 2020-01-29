@@ -142,6 +142,7 @@ Building a deb package:
 
 Just run the `build_deb.sh` script.
 A deb file will be created, that should be copied on the device.
+Note: I didn't add yet dependencies, things will be needed to be installed in advance (such as dkms)
 
 Installing on the device:
 

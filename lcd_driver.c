@@ -27,11 +27,6 @@ struct HG_LTP08_touchscreen
     struct drm_panel base;
     struct mipi_dsi_device *dsi;
 
-    // WARNING: not all of them might be needed for a particular case!
-    //struct backlight_device *backlight;
-    //struct i2c_client *bridge_i2c;
-    //struct i2c_adapter *ddc;
-
     int resetPin;
     int gpioResetD;
 
@@ -42,77 +37,28 @@ struct HG_LTP08_touchscreen
 
 static const struct drm_display_mode default_mode =
 {
-
     .hdisplay	= 800,
     .vdisplay	= 1280,
 
-    // Original:
-/*
-    .vrefresh	= 60, // this is not used in a 'functional' way
-    .clock      = 68700, // original, gets adjusted to 83333 by the driver (setting is in kHz)
-
-    .hsync_start= 800 + 32,
-    .hsync_end	= 800 + 32 + 20,
-    .htotal		= 800 + 32 + 20 + 20, // 872
-*/
-
-// The one below appears to work, but needs more tests and adjustments
-// some of the settings appear to work better than others, it's harder to reproduce the tearing issue but it appears eventually, so I need to test this further
-
-// Why this is odd:
-// the above says that the vertical refresh is 60. It cannot be.
-
-// the .clock above gets adjusted by the vc4 driver (in vc4_dsi.c, vc4_dsi_encoder_mode_fixup function), the pixel clock becomes 83333 (no matter what one sets in a certain interval up to that value)
-// to 'fix' that, they adjust the horizontal timings set below, so they become:
-
-// Adjusted hsync_start: 1017
-// Adjusted hsync_end: 1037
-// Adjusted htotal: 1237
-
-// with this htotal, the frame rate cannot be 60
-// the pixel clock can be calculated (actually from some reasons it's higher in practice) like this:
-// horz htotal * vert htotal * 60 = 96634 kHz, which is higher than the actual adjusted pixel clock (83333)
-// this happened because I enlarged the 'back porch' while testing, over the value that overflows the pixel clock
-// max achievable by these settings is 52 Hz
-
-// this can be tuned in two ways:
-// - adjust the clock - they keep the 'back porch' and 'sync' lengths as set, so they insert more in the front porch - increasing the clock value will result in decreasing the hsync start and getting a better fps
-// - adjust the back porch - decreasing that value also results in higher fps possible
-
-// adjusting both of them could result in something that the panel 'likes' and have a higher fps without that ugly tearing
-
-// Note: the comment above is for back porch 200 - for this value I could still get issues (not easy)
-// apparently for now it can be made to work for 50 fps or even 55 without 'tricks'...
-
-// I looked over the vc4 sources for htotal, it is used only in vc4_dsi.c and vc4_crtc.c
-// in the first it's only adjusted in vc4_dsi_encoder_mode_fixup and that's it
-// I think the key to this is in vc4_crtc_config_pv function from vc4_crtc.c
-// I still have no idea what that does (configures the 'pixel valves'?)
-// there is one single relevant call in there which uses htotal...
-
-
-    .vrefresh   = 60, // this is not used in a 'functional' way
-    .clock      = 68700, // original, gets adjusted to 83333 by the driver (setting is in kHz)
-    //.clock      = 83333,
+    .vrefresh   = 60,
+    .clock      = 68700,
 
 #define FRONT_PORCH 0
 #define SYNC_LEN 20
 #define BACK_PORCH 230
 
-    .hsync_start= 800 + FRONT_PORCH, // zero gets adjusted to a bigger value
+    .hsync_start= 800 + FRONT_PORCH,
     .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
     .htotal		= 800 + FRONT_PORCH + SYNC_LEN + BACK_PORCH,
 
-// those seem to be good, do not touch!
     .vsync_start= 1280 + 8,
     .vsync_end	= 1280 + 8 + 4,
-    .vtotal		= 1280 + 8 + 4 + 10, // 1302
-
+    .vtotal		= 1280 + 8 + 4 + 10,
 
     .width_mm = 170,
     .height_mm = 106,
 
-    .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC /*| DRM_MODE_FLAG_CLKDIV2*/, // in vc4_dsi or vc4_crtc, the div2 flag does not make a difference, but does it elsewhere?
+    .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
 };
 
 
@@ -164,43 +110,37 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x2D, 0x03),
 
     SWITCH_PAGE_CMD(1),
-    //Set VCOM
+
     COMMAND_CMD(0x00, 0x00),
     COMMAND_CMD(0x01, 0x6F),
-    //Set Gamma Power);W_D( VGMP);W_D(VGMN);W_D(VGSP);W_D(VGSN)
     COMMAND_CMD(0x17, 0x00),
-    COMMAND_CMD(0x18, 0xD7),//VGMP=4.8V
+    COMMAND_CMD(0x18, 0xD7),
     COMMAND_CMD(0x19, 0x05),
     COMMAND_CMD(0x1A, 0x00),
-    COMMAND_CMD(0x1B, 0xD7),//VGMN=-4.8V
+    COMMAND_CMD(0x1B, 0xD7),
     COMMAND_CMD(0x1C, 0x05),
-    //Set Gate Power
-    COMMAND_CMD(0x1F, 0x79),//VGH_Reg = 18V
-    COMMAND_CMD(0x20, 0x2D),//VGL_Reg  = -12V
-    COMMAND_CMD(0x21, 0x2d),//VGL_Reg2 = -12V
+    COMMAND_CMD(0x1F, 0x79),
+    COMMAND_CMD(0x20, 0x2D),
+    COMMAND_CMD(0x21, 0x2d),
     COMMAND_CMD(0x22, 0x4F),
-    COMMAND_CMD(0x26, 0xF1),//VDDD from IOVCC
-    //SET PANEL
-    COMMAND_CMD(0x37, 0x09),//SS=1 BGR=1
-    //SET RGBCYC
-    COMMAND_CMD(0x38, 0x04),//JDT=100 column inversion
-    COMMAND_CMD(0x39, 0x08),//RGB_N
+    COMMAND_CMD(0x26, 0xF1),
+
+    COMMAND_CMD(0x37, 0x09),
+    COMMAND_CMD(0x38, 0x04),
+    COMMAND_CMD(0x39, 0x08),
     COMMAND_CMD(0x3A, 0x12),
-    COMMAND_CMD(0x3C, 0x78),//SET EQ3 for TE_H
-    COMMAND_CMD(0x3E, 0x80),//SET CHGEN_OFF
-    COMMAND_CMD(0x3F, 0x80),//SET CHGEN_OFF2
-    //Set TCON
-    COMMAND_CMD(0x40, 0x06),//RSO=800 RGB
-    COMMAND_CMD(0x41, 0xA0),//LN=640->1280 line
-    //power voltage
-    COMMAND_CMD(0x55, 0x01),//DCDCM=0001
+    COMMAND_CMD(0x3C, 0x78),
+    COMMAND_CMD(0x3E, 0x80),
+    COMMAND_CMD(0x3F, 0x80),
+    COMMAND_CMD(0x40, 0x06),
+    COMMAND_CMD(0x41, 0xA0),
+    COMMAND_CMD(0x55, 0x01),
     COMMAND_CMD(0x56, 0x01),
     COMMAND_CMD(0x57, 0xA8),
     COMMAND_CMD(0x58, 0x0A),
-    COMMAND_CMD(0x59, 0x2A),//VCL = -2.7V
-    COMMAND_CMD(0x5A, 0x37),//VGH = 19V
-    COMMAND_CMD(0x5B, 0x19),//VGL = -12V
-    //Gamma
+    COMMAND_CMD(0x59, 0x2A),
+    COMMAND_CMD(0x5A, 0x37),
+    COMMAND_CMD(0x5B, 0x19),
     COMMAND_CMD(0x5D, 0x70),
     COMMAND_CMD(0x5E, 0x50),
     COMMAND_CMD(0x5F, 0x3F),
@@ -240,8 +180,7 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x81, 0x08),
     COMMAND_CMD(0x82, 0x02),
 
-    SWITCH_PAGE_CMD(2),//for GIP
-    //GIP_L Pin mapping
+    SWITCH_PAGE_CMD(2),
     COMMAND_CMD(0x00, 0x00),
     COMMAND_CMD(0x01, 0x04),
     COMMAND_CMD(0x02, 0x06),
@@ -264,7 +203,6 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x13, 0x1F),
     COMMAND_CMD(0x14, 0x1F),
     COMMAND_CMD(0x15, 0x1F),
-    //GIP_R Pin mapping
     COMMAND_CMD(0x16, 0x01),
     COMMAND_CMD(0x17, 0x05),
     COMMAND_CMD(0x18, 0x07),
@@ -287,7 +225,6 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x29, 0x13),
     COMMAND_CMD(0x2A, 0x1F),
     COMMAND_CMD(0x2B, 0x1F),
-    //GIP Timing
     COMMAND_CMD(0x58, 0x10),
     COMMAND_CMD(0x59, 0x00),
     COMMAND_CMD(0x5A, 0x00),
@@ -335,9 +272,7 @@ static const struct panel_command panel_cmds_init[] =
     SWITCH_PAGE_CMD(0),
     COMMAND_CMD(0xE6, 0x02),
     COMMAND_CMD(0xE7, 0x02),
-    //TE - something related with tear, but how to set?
-    //COMMAND_CMD(0x34, 0x00), // TE off?
-    COMMAND_CMD(0x35, 0x00), // TE on?
+    COMMAND_CMD(0x35, 0x00),
     CMD_DELAY(0x11, 0x00, 100),
     CMD_DELAY(0x29, 0x00, 100),
 };
@@ -406,22 +341,26 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
         ctx->gpioResetD = 0;
         printk(KERN_ALERT "Couldn't grab the gpio ResetD pin\n");
     }
-    else ctx->gpioResetD = 1;
+    else
+        ctx->gpioResetD = 1;
 
-    if (ctx->gpioResetD) gpio_direction_output(ctx->resetPin, 1);
-
+    if (ctx->gpioResetD)
+        gpio_direction_output(ctx->resetPin, 1);
 
     msleep(125);
 
-    if (ctx->gpioResetD) gpio_set_value_cansleep(ctx->resetPin, 0);
+    if (ctx->gpioResetD)
+        gpio_set_value_cansleep(ctx->resetPin, 0);
     msleep(20);
-    if (ctx->gpioResetD) gpio_set_value_cansleep(ctx->resetPin, 1);
+    if (ctx->gpioResetD)
+        gpio_set_value_cansleep(ctx->resetPin, 1);
 
     msleep(125);
 
     slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
 
-    if (!slow_mode) dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+    if (!slow_mode)
+        dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
     ret = HG_LTP08_init_sequence(ctx);
     if (ret)
@@ -431,14 +370,10 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
     if (ret)
         return ret;
 
-    if (!slow_mode) dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+    if (!slow_mode)
+        dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
 
     msleep(125);
-
-    //ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK/*MIPI_DSI_DCS_TEAR_MODE_VHBLANK*/);
-	//if (ret)
-	//	return ret;
-	//mipi_dsi_dcs_set_tear_off(ctx->dsi);
 
     ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
     if (ret)
@@ -483,8 +418,9 @@ static int HG_LTP08_unprepare(struct drm_panel *panel)
 
     msleep(120);
 
-    if (ctx->gpioResetD) {
-        gpio_free(ctx->resetPin); // find something different, this is GPL
+    if (ctx->gpioResetD)
+    {
+        gpio_free(ctx->resetPin);
         ctx->gpioResetD = 0;
     }
 
@@ -500,16 +436,6 @@ static int HG_LTP08_enable(struct drm_panel *panel)
 
     if (ctx->enabled)
         return 0;
-
-    // TODO: check the backlight functionality with this kernel!
-    //backlight_enable(ctx->backlight);
-    /*
-    	if (ctx->backlight) {
-    		ctx->backlight->props.state &= ~BL_CORE_FBBLANK;
-    		ctx->backlight->props.power = FB_BLANK_UNBLANK;
-    		backlight_update_status(ctx->backlight);
-    	}
-    */
 
     printk(KERN_ALERT "Enabling!\n");
 
@@ -528,16 +454,6 @@ static int HG_LTP08_disable(struct drm_panel *panel)
 
     if (!ctx->enabled)
         return 0;
-
-    //backlight_disable(ctx->backlight);
-
-    /*
-    	if (ctx->backlight) {
-    		ctx->backlight->props.power = FB_BLANK_POWERDOWN;
-    		ctx->backlight->props.state |= BL_CORE_FBBLANK;
-    		backlight_update_status(ctx->backlight);
-    	}
-    */
 
     mipi_dsi_dcs_set_display_off(ctx->dsi);
 
@@ -574,20 +490,10 @@ static int HG_LTP08_get_modes(struct drm_panel *panel)
 
     panel->connector->display_info.bpc = 8;
 
-	drm_display_info_set_bus_formats(&panel->connector->display_info, &bus_format, 1);
+    drm_display_info_set_bus_formats(&panel->connector->display_info, &bus_format, 1);
 
     return 1;
 }
-
-/*
-static void HG_LTP08_panel_shutdown(struct device *dev)
-{
-	struct drm_panel *panel = dev_get_drvdata(dev);
-
-	HG_LTP08_disable(panel);
-}
-*/
-
 
 static const struct drm_panel_funcs HG_LTP08_drm_funcs =
 {
@@ -616,62 +522,19 @@ static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
     ctx->resetPin = DEFAULT_GPIO_RESET_PIN;
 
     prop = of_get_property(dsi->dev.of_node, "reset", NULL);
-    if (prop) {
+    if (prop)
+    {
         ctx->resetPin = be32_to_cpup(prop);
         printk(KERN_ALERT "Reset pin set to %d\n", ctx->resetPin);
     }
-    else printk(KERN_ALERT "Reset pin not set, using default\n");
+    else
+        printk(KERN_ALERT "Reset pin not set, using default\n");
 
     mipi_dsi_set_drvdata(dsi, ctx);
     ctx->dsi = dsi;
 
     dsi->lanes = 4;
     dsi->format = MIPI_DSI_FMT_RGB888;
-
-    // TODO: try other modes
-
-    // also seems to work fine even if MIPI_DSI_MODE_LPM is not set - this makes the driver send dts commands in 'slow' mode
-    // should not hurt to be set
-
-
-/* DSI mode flags */
-
-// many of them seem to not have any effect in vc4 driver!
-
-/* video mode */
-//#define MIPI_DSI_MODE_VIDEO		BIT(0)
-/* video burst mode */
-//#define MIPI_DSI_MODE_VIDEO_BURST	BIT(1)
-/* video pulse mode */
-//#define MIPI_DSI_MODE_VIDEO_SYNC_PULSE	BIT(2)
-/* enable auto vertical count mode */
-//#define MIPI_DSI_MODE_VIDEO_AUTO_VERT	BIT(3)
-/* enable hsync-end packets in vsync-pulse and v-porch area */
-//#define MIPI_DSI_MODE_VIDEO_HSE		BIT(4)
-/* disable hfront-porch area */
-//#define MIPI_DSI_MODE_VIDEO_HFP		BIT(5)
-/* disable hback-porch area */
-//#define MIPI_DSI_MODE_VIDEO_HBP		BIT(6)
-/* disable hsync-active area */
-//#define MIPI_DSI_MODE_VIDEO_HSA		BIT(7)
-/* flush display FIFO on vsync pulse */
-//#define MIPI_DSI_MODE_VSYNC_FLUSH	BIT(8)
-/* disable EoT packets in HS mode */
-//#define MIPI_DSI_MODE_EOT_PACKET	BIT(9)
-/* device supports non-continuous clock behavior (DSI spec 5.6.1) */
-//#define MIPI_DSI_CLOCK_NON_CONTINUOUS	BIT(10)
-/* transmit data in low power */
-//#define MIPI_DSI_MODE_LPM		BIT(11)
-
-    //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_VSYNC_FLUSH | MIPI_DSI_MODE_VIDEO_AUTO_VERT;
-
-    //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VSYNC_FLUSH; // this seems more tear free than other settings? Still can see tearing from time to time.
-
-    //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS  | MIPI_DSI_MODE_VIDEO_HSA /*| MIPI_DSI_MODE_VSYNC_FLUSH*/;
-
-    //dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_VIDEO_AUTO_VERT/*| MIPI_DSI_MODE_VSYNC_FLUSH*/;
-
-    //dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VSYNC_FLUSH /*| MIPI_DSI_CLOCK_NON_CONTINUOUS */ /*| MIPI_DSI_MODE_VIDEO_SYNC_PULSE*/ /*| MIPI_DSI_MODE_VIDEO_BURST*/;
 
     dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
 
@@ -721,19 +584,6 @@ static int HG_LTP08_remove(struct mipi_dsi_device *dsi)
     return 0;
 }
 
-/*
-static void HG_LTP08_shutdown(struct mipi_dsi_device *dsi)
-{
-    struct device *dev;
-
-    printk(KERN_ALERT "Shutdown!\n");
-
-    dev = &dsi->dev;
-	HG_LTP08_panel_shutdown(dev);
-}
-*/
-
-
 static const struct of_device_id HG_LTP08_touchscreen_of_match[] =
 {
     { .compatible = "HG_LTP08" },
@@ -751,7 +601,6 @@ static struct mipi_dsi_driver panel_HG_LTP08_dsi_driver =
     },
     .probe = HG_LTP08_probe,
     .remove = HG_LTP08_remove,
-//	.shutdown = HG_LTP08_shutdown,
 };
 module_mipi_dsi_driver(panel_HG_LTP08_dsi_driver);
 
