@@ -142,7 +142,7 @@ Building a deb package:
 
 Just run the `build_deb.sh` script.
 A deb file will be created, that should be copied on the device.
-Note: I didn't add yet dependencies, things will be needed to be installed in advance (such as dkms)
+Note: Some dependencies are missing, for now I set only dkms and kernel headers.
 
 Installing on the device:
 

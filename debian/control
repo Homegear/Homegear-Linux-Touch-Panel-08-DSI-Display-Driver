@@ -5,5 +5,5 @@ Build-Depends: debhelper (>= 10), dkms
 
 Package: hgltp08
 Architecture: all
-Depends: dkms
+Depends: dkms, raspberrypi-kernel-headers
 Description: DKMS source for HG_LTP08 lcd driver
