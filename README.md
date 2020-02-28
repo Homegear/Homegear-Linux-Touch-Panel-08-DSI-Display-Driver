@@ -108,7 +108,7 @@ Screen:
 
 This will rotate only the screen, but not the touch input. To also rotate the touch input, use:
 
-`xinput --set-prop 6 132 0 -1 1 1 0 0 0 0 1`
+`xinput --set-prop 6 138 0 -1 1 1 0 0 0 0 1`
 
 ### DKMS
 
