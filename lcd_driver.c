@@ -433,6 +433,7 @@ static int HG_LTP08_unprepare(struct drm_panel *panel)
 static int HG_LTP08_enable(struct drm_panel *panel)
 {
     struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
+    int ret;
 
     if (ctx->enabled)
         return 0;
@@ -440,6 +441,10 @@ static int HG_LTP08_enable(struct drm_panel *panel)
     printk(KERN_ALERT "Enabling!\n");
 
     drm_panel_prepare(panel);
+
+	ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+	if (ret < 0)
+		return ret;
 
     mipi_dsi_dcs_set_display_on(ctx->dsi);
 
@@ -536,7 +541,7 @@ static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
     dsi->lanes = 4;
     dsi->format = MIPI_DSI_FMT_RGB888;
 
-    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
