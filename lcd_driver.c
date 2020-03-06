@@ -40,7 +40,7 @@ static const struct drm_display_mode default_mode =
     .hdisplay	= 800,
     .vdisplay	= 1280,
 
-    .vrefresh   = 60,
+    .vrefresh   = 50,
     .clock      = 68700,
 
 #define FRONT_PORCH 0
