@@ -110,6 +110,8 @@ This will rotate only the screen, but not the touch input. To also rotate the to
 
 `xinput --set-prop 6 138 0 -1 1 1 0 0 0 0 1`
 
+For some reason, the 'prop' can change, so check its number with xinput to be sure.
+
 ### DKMS
 
 
