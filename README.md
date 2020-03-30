@@ -112,6 +112,12 @@ This will rotate only the screen, but not the touch input. To also rotate the to
 
 For some reason, the 'prop' can change, so check its number with xinput to be sure.
 
+I don't think if this can help or not, but adding in cmdline.txt the boot option:
+
+`video=DSI-1:800x1280,rotate=90`
+
+will rotate the console, but it does not affect the X server, so it doesn't help with the screen rotation in graphical mode.
+
 ### DKMS
 
 
