@@ -21,6 +21,8 @@
 #include <linux/gpio.h>
 
 #define DEFAULT_GPIO_RESET_PIN 13
+#define DEFAULT_GPIO_BACKLIGHT_PIN 28
+
 
 struct HG_LTP08_touchscreen
 {
@@ -29,6 +31,9 @@ struct HG_LTP08_touchscreen
 
     int resetPin;
     int gpioResetD;
+
+    int backlightPin;
+    int gpioBacklightD;
 
     bool prepared;
     bool enabled;
@@ -335,6 +340,20 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
     if (!dsi)
         printk(KERN_ALERT "No DSI device!\n");
 
+
+    ctx->gpioBacklightD = gpio_request(ctx->backlightPin, "gpioBacklightD");
+    if (ctx->gpioBacklightD < 0)
+    {
+        ctx->gpioBacklightD = 0;
+        printk(KERN_ALERT "Couldn't grab the gpio BacklightD pin\n");
+    }
+    else
+        ctx->gpioBacklightD = 1;
+
+    if (ctx->gpioBacklightD)
+        gpio_direction_output(ctx->backlightPin, 1);
+
+
     ctx->gpioResetD = gpio_request(ctx->resetPin, "gpioResetD");
     if (ctx->gpioResetD < 0)
     {
@@ -391,6 +410,9 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
 
     msleep(20);
 
+    if (ctx->gpioBacklightD)
+        gpio_set_value_cansleep(ctx->backlightPin, 1);
+
     ctx->prepared = true;
 
     return 0;
@@ -418,10 +440,19 @@ static int HG_LTP08_unprepare(struct drm_panel *panel)
 
     msleep(120);
 
+    if (ctx->gpioBacklightD)
+        gpio_set_value_cansleep(ctx->backlightPin, 0);
+
     if (ctx->gpioResetD)
     {
         gpio_free(ctx->resetPin);
         ctx->gpioResetD = 0;
+    }
+
+    if (ctx->gpioBacklightD)
+    {
+        gpio_free(ctx->backlightPin);
+        ctx->gpioBacklightD = 0;
     }
 
     ctx->prepared = false;
@@ -442,11 +473,14 @@ static int HG_LTP08_enable(struct drm_panel *panel)
 
     drm_panel_prepare(panel);
 
-	ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
-	if (ret < 0)
-		return ret;
+    ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+    if (ret < 0)
+	return ret;
 
     mipi_dsi_dcs_set_display_on(ctx->dsi);
+
+    if (ctx->gpioBacklightD)
+        gpio_set_value_cansleep(ctx->backlightPin, 1);
 
     ctx->enabled = true;
 
@@ -461,6 +495,9 @@ static int HG_LTP08_disable(struct drm_panel *panel)
         return 0;
 
     mipi_dsi_dcs_set_display_off(ctx->dsi);
+
+    if (ctx->gpioBacklightD)
+        gpio_set_value_cansleep(ctx->backlightPin, 0);
 
     ctx->enabled = false;
 
@@ -523,6 +560,18 @@ static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
     if (!ctx)
         return -ENOMEM;
     memset(ctx, 0, sizeof(*ctx));
+
+    ctx->backlightPin = DEFAULT_GPIO_BACKLIGHT_PIN;
+
+    prop = of_get_property(dsi->dev.of_node, "backlight", NULL);
+    if (prop)
+    {
+        ctx->backlightPin = be32_to_cpup(prop);
+        printk(KERN_ALERT "Backlight pin set to %d\n", ctx->backlightPin);
+    }
+    else
+        printk(KERN_ALERT "Backlight pin not set, using default\n");
+
 
     ctx->resetPin = DEFAULT_GPIO_RESET_PIN;
 
