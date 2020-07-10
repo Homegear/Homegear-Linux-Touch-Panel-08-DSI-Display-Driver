@@ -410,8 +410,8 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
 
     msleep(20);
 
-    if (ctx->gpioBacklightD)
-        gpio_set_value_cansleep(ctx->backlightPin, 1);
+    //if (ctx->gpioBacklightD)
+    //    gpio_set_value_cansleep(ctx->backlightPin, 1);
 
     ctx->prepared = true;
 
@@ -475,7 +475,7 @@ static int HG_LTP08_enable(struct drm_panel *panel)
 
     ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
     if (ret < 0)
-	return ret;
+        return ret;
 
     mipi_dsi_dcs_set_display_on(ctx->dsi);
 
