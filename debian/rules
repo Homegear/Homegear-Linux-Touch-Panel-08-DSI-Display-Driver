@@ -18,10 +18,10 @@
 	dh $@ --with dkms
 
 override_dh_install:
-	dh_install lcd_driver.c usr/src/HG_LTP08-1.0/
-	dh_install Makefile usr/src/HG_LTP08-1.0/
-	dh_install dkms.conf usr/src/HG_LTP08-1.0/
-	dh_install HG_LTP08_lcd_driver.dtbo boot/overlays/
+	dh_install lcd_driver.c /usr/src/HG_LTP08-1.0/
+	dh_install Makefile /usr/src/HG_LTP08-1.0/
+	dh_install dkms.conf /usr/src/HG_LTP08-1.0/
+	dh_install HG_LTP08_lcd_driver.dtbo /boot/overlays/
 
 override_dh_dkms:
 	dh_dkms -V $(DEB_VERSION_UPSTREAM)
