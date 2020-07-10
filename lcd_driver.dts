@@ -29,6 +29,7 @@
                 label= "Homegear LTP08 Multitouch 8\" Display";
                 vc4_dsi = <&dsi1>;
                 reset = <13>;
+		backlight = <28>;
                 port {
                     panel_dsi_in: endpoint {
                         remote-endpoint = <&dsi1_out_port>;
