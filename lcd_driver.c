@@ -47,18 +47,35 @@ static const struct drm_display_mode default_mode =
 
     .vrefresh   = 50,
     .clock      = 68700,
+    //.clock      = 67800,
 
 #define FRONT_PORCH 0
 #define SYNC_LEN 20
 #define BACK_PORCH 230
 
+/*
+#define FRONT_PORCH 18
+#define SYNC_LEN 18
+#define BACK_PORCH 18
+*/
+
     .hsync_start= 800 + FRONT_PORCH,
     .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
     .htotal		= 800 + FRONT_PORCH + SYNC_LEN + BACK_PORCH,
 
-    .vsync_start= 1280 + 8,
-    .vsync_end	= 1280 + 8 + 4,
-    .vtotal		= 1280 + 8 + 4 + 10,
+/*
+#define VFRONT_PORCH 8
+#define VSYNC_LEN 4
+#define VBACK_PORCH 10
+*/
+
+#define VFRONT_PORCH 30
+#define VSYNC_LEN 4
+#define VBACK_PORCH 10
+
+    .vsync_start= 1280 + VFRONT_PORCH,
+    .vsync_end	= 1280 + VFRONT_PORCH + VSYNC_LEN,
+    .vtotal		= 1280 + VFRONT_PORCH + VSYNC_LEN + VBACK_PORCH,
 
     .width_mm = 170,
     .height_mm = 106,
@@ -82,6 +99,7 @@ struct panel_command
     u8 delay;
 };
 
+/*
 #define SWITCH_PAGE_CMD(_page)  \
 	{					        \
 		.cmd= {			        \
@@ -90,6 +108,17 @@ struct panel_command
 		},				        \
 		.delay = 0,             \
 	}
+*/
+
+#define SWITCH_PAGE_CMD(_page)  \
+	{					        \
+		.cmd= {			        \
+            .cmd = 0xFF,        \
+			.data = (_page),	\
+		},				        \
+		.delay = 0,             \
+	}
+
 
 #define CMD_DELAY(_cmd, _data, _delay)\
 	{						    \
@@ -105,6 +134,7 @@ struct panel_command
 
 static const struct panel_command panel_cmds_init[] =
 {
+    /*
     SWITCH_PAGE_CMD(0),
     COMMAND_CMD(0xE1, 0x93),
     COMMAND_CMD(0xE2, 0x65),
@@ -280,6 +310,206 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x35, 0x00),
     CMD_DELAY(0x11, 0x00, 100),
     CMD_DELAY(0x29, 0x00, 100),
+    */
+
+    SWITCH_PAGE_CMD(0x03),
+    COMMAND_CMD(0x01, 0x00),
+    COMMAND_CMD(0x02, 0x00),
+    COMMAND_CMD(0x02, 0x00),
+    COMMAND_CMD(0x03, 0x53),
+    COMMAND_CMD(0x04, 0x53),
+    // page 4
+    COMMAND_CMD(0x05, 0x13),
+    COMMAND_CMD(0x06, 0x4),
+    COMMAND_CMD(0x07, 0x2),
+    COMMAND_CMD(0x08, 0x2),
+    COMMAND_CMD(0x09, 0x0),
+    COMMAND_CMD(0x0A, 0x0),
+    COMMAND_CMD(0x0B, 0x0),
+    COMMAND_CMD(0x0C, 0x0),
+    COMMAND_CMD(0x0D, 0x0),
+    COMMAND_CMD(0x0E, 0x0),
+    COMMAND_CMD(0x0F, 0x0),
+    COMMAND_CMD(0x10, 0x0),
+    COMMAND_CMD(0x11, 0x0),
+    COMMAND_CMD(0x12, 0x0),
+    COMMAND_CMD(0x13, 0x0),
+    COMMAND_CMD(0x14, 0x0),
+    COMMAND_CMD(0x15, 0x0),
+    COMMAND_CMD(0x16, 0x0),
+    COMMAND_CMD(0x17, 0x0),
+    COMMAND_CMD(0x18, 0x0),
+    COMMAND_CMD(0x19, 0x0),
+    COMMAND_CMD(0x1A, 0x0),
+    COMMAND_CMD(0x1B, 0x0),
+    COMMAND_CMD(0x1C, 0x0),
+    COMMAND_CMD(0x1D, 0x0),
+    COMMAND_CMD(0x1E, 0xC0),
+    COMMAND_CMD(0x1F, 0x80),
+    COMMAND_CMD(0x20, 0x02),
+    COMMAND_CMD(0x21, 0x09),
+    COMMAND_CMD(0x22, 0x00),
+    COMMAND_CMD(0x23, 0x00),
+    COMMAND_CMD(0x24, 0x00),
+    COMMAND_CMD(0x25, 0x00),
+    COMMAND_CMD(0x26, 0x00),
+    COMMAND_CMD(0x27, 0x00),
+    COMMAND_CMD(0x28, 0x55),
+    COMMAND_CMD(0x29, 0x03),
+    COMMAND_CMD(0x2A, 0x00),
+    COMMAND_CMD(0x2B, 0x00),
+    COMMAND_CMD(0x2C, 0x00),
+    COMMAND_CMD(0x2D, 0x00),
+    COMMAND_CMD(0x2E, 0x00),
+    COMMAND_CMD(0x2F, 0x00),
+    COMMAND_CMD(0x30, 0x00),
+    COMMAND_CMD(0x31, 0x00),
+    COMMAND_CMD(0x32, 0x00),
+    COMMAND_CMD(0x33, 0x00),
+    COMMAND_CMD(0x34, 0x00),
+    COMMAND_CMD(0x35, 0x00),
+    COMMAND_CMD(0x36, 0x00),
+    COMMAND_CMD(0x37, 0x00),
+    COMMAND_CMD(0x38, 0x3C),
+    COMMAND_CMD(0x39, 0x00),
+    COMMAND_CMD(0x3A, 0x00),
+    COMMAND_CMD(0x3B, 0x00),
+    COMMAND_CMD(0x3C, 0x00),
+    COMMAND_CMD(0x3D, 0x00),
+    COMMAND_CMD(0x3E, 0x00),
+    COMMAND_CMD(0x3F, 0x00),
+    COMMAND_CMD(0x40, 0x00),
+    COMMAND_CMD(0x41, 0x00),
+    COMMAND_CMD(0x42, 0x00),
+    COMMAND_CMD(0x43, 0x00),
+    COMMAND_CMD(0x44, 0x00),
+    COMMAND_CMD(0x50, 0x01),
+    COMMAND_CMD(0x51, 0x23),
+    COMMAND_CMD(0x52, 0x45),
+    COMMAND_CMD(0x53, 0x67),
+    COMMAND_CMD(0x54, 0x89),
+    COMMAND_CMD(0x55, 0xAB),
+    // page 2 for GIP
+    COMMAND_CMD(0x56, 0x01),
+    // GIP_L pin mapping
+    COMMAND_CMD(0x57, 0x23),
+    COMMAND_CMD(0x58, 0x45),
+    COMMAND_CMD(0x59, 0x67),
+    COMMAND_CMD(0x5A, 0x89),
+    COMMAND_CMD(0x5B, 0xAB),
+    COMMAND_CMD(0x5C, 0xCD),
+    COMMAND_CMD(0x5D, 0xEF),
+    COMMAND_CMD(0x5E, 0x01),
+    COMMAND_CMD(0x5F, 0x08),
+    COMMAND_CMD(0x60, 0x02),
+    COMMAND_CMD(0x61, 0x02),
+    COMMAND_CMD(0x62, 0x0A),
+    COMMAND_CMD(0x63, 0x15),
+    COMMAND_CMD(0x64, 0x14),
+    COMMAND_CMD(0x65, 0x02),
+    COMMAND_CMD(0x66, 0x11),
+    COMMAND_CMD(0x67, 0x10),
+    COMMAND_CMD(0x68, 0x02),
+    COMMAND_CMD(0x69, 0x0F),
+    COMMAND_CMD(0x6A, 0x0E),
+    COMMAND_CMD(0x6B, 0x02),
+    COMMAND_CMD(0x6C, 0x0D),
+    COMMAND_CMD(0x6D, 0x0C),
+    COMMAND_CMD(0x6E, 0x06),
+    COMMAND_CMD(0x6F, 0x02),
+    COMMAND_CMD(0x70, 0x02),
+    COMMAND_CMD(0x71, 0x02),
+    COMMAND_CMD(0x72, 0x02),
+    COMMAND_CMD(0x73, 0x02),
+    COMMAND_CMD(0x74, 0x02),
+    COMMAND_CMD(0x75, 0x06),
+    COMMAND_CMD(0x76, 0x02),
+    COMMAND_CMD(0x77, 0x02),
+    COMMAND_CMD(0x78, 0x0A),
+    COMMAND_CMD(0x79, 0x15),
+    COMMAND_CMD(0x7A, 0x14),
+    COMMAND_CMD(0x7B, 0x02),
+    COMMAND_CMD(0x7C, 0x10),
+    COMMAND_CMD(0x7D, 0x11),
+    COMMAND_CMD(0x7E, 0x02),
+    COMMAND_CMD(0x7F, 0x0C),
+    COMMAND_CMD(0x80, 0x0D),
+    COMMAND_CMD(0x81, 0x02),
+    COMMAND_CMD(0x82, 0x0E),
+    COMMAND_CMD(0x83, 0x0F),
+    COMMAND_CMD(0x84, 0x08),
+    COMMAND_CMD(0x85, 0x02),
+    COMMAND_CMD(0x86, 0x02),
+    COMMAND_CMD(0x87, 0x02),
+    COMMAND_CMD(0x88, 0x02),
+    COMMAND_CMD(0x89, 0x02),
+    COMMAND_CMD(0x8A, 0x02),
+    SWITCH_PAGE_CMD(0x04),
+    COMMAND_CMD(0x6C, 0x15),
+    COMMAND_CMD(0x6E, 0x30),
+    COMMAND_CMD(0x6F, 0x33),
+    COMMAND_CMD(0x8D, 0x87),
+    COMMAND_CMD(0x87, 0xBA),
+    COMMAND_CMD(0x26, 0x76),
+    COMMAND_CMD(0xB2, 0xD1),
+    COMMAND_CMD(0x35, 0x1F),
+    COMMAND_CMD(0x33, 0x14),
+    COMMAND_CMD(0x3A, 0xA9),
+    COMMAND_CMD(0x38, 0x01),
+    COMMAND_CMD(0x39, 0x00),
+    SWITCH_PAGE_CMD(0x01),
+    COMMAND_CMD(0x22, 0x0A),
+    COMMAND_CMD(0x31, 0x00),
+    COMMAND_CMD(0x50, 0xC0),
+    COMMAND_CMD(0x51, 0xC0),
+    COMMAND_CMD(0x53, 0x43),
+    COMMAND_CMD(0x55, 0x7A),
+    COMMAND_CMD(0x60, 0x28),
+    COMMAND_CMD(0x2E, 0xC8),
+    COMMAND_CMD(0xA0, 0x01),
+    COMMAND_CMD(0xA1, 0x11),
+    COMMAND_CMD(0xA2, 0x1C),
+    COMMAND_CMD(0xA3, 0x0E),
+    COMMAND_CMD(0xA4, 0x15),
+    COMMAND_CMD(0xA5, 0x28),
+    COMMAND_CMD(0xA6, 0x1C),
+    COMMAND_CMD(0xA7, 0x1E),
+    COMMAND_CMD(0xA8, 0x73),
+    COMMAND_CMD(0xA9, 0x1C),
+    COMMAND_CMD(0xAA, 0x26),
+    COMMAND_CMD(0xAB, 0x63),
+    COMMAND_CMD(0xAC, 0x18),
+    COMMAND_CMD(0xAD, 0x16),
+    COMMAND_CMD(0xAE, 0x4D),
+    COMMAND_CMD(0xAF, 0x1F),
+    COMMAND_CMD(0xB0, 0x2A),
+    COMMAND_CMD(0xB1, 0x4F),
+    COMMAND_CMD(0xB2, 0x5F),
+    COMMAND_CMD(0xB3, 0x39),
+    COMMAND_CMD(0xC0, 0x01),
+    COMMAND_CMD(0xC1, 0x11),
+    COMMAND_CMD(0xC2, 0x1C),
+    COMMAND_CMD(0xC3, 0x0E),
+    COMMAND_CMD(0xC4, 0x15),
+    COMMAND_CMD(0xC5, 0x28),
+    COMMAND_CMD(0xC6, 0x1C),
+    COMMAND_CMD(0xC7, 0x1E),
+    COMMAND_CMD(0xC8, 0x73),
+    COMMAND_CMD(0xC9, 0x1C),
+    COMMAND_CMD(0xCA, 0x26),
+    COMMAND_CMD(0xCB, 0x63),
+    COMMAND_CMD(0xCC, 0x18),
+    COMMAND_CMD(0xCD, 0x16),
+    COMMAND_CMD(0xCE, 0x4D),
+    COMMAND_CMD(0xCF, 0x1F),
+    COMMAND_CMD(0xD0, 0x2A),
+    COMMAND_CMD(0xD1, 0x4F),
+    COMMAND_CMD(0xD2, 0x5F),
+    COMMAND_CMD(0xD3, 0x39),
+    SWITCH_PAGE_CMD(0x00),
+    COMMAND_CMD(0x35, 0x00),
+    CMD_DELAY(0x11, 0x00, 100),
+    CMD_DELAY(0x29, 0x00, 100),
 };
 
 
@@ -302,9 +532,21 @@ static int send_cmd_data(struct HG_LTP08_touchscreen *ctx, u8 cmd, u8 data)
 
 static int switch_page(struct HG_LTP08_touchscreen *ctx, u8 page)
 {
-    return send_cmd_data(ctx, 0xE0, page);
-}
+//    return send_cmd_data(ctx, 0xE0, page);
 
+    u8 buf[4] = { 0xFF, 0x98, 0x81, page };
+    int ret;
+
+    ret = mipi_dsi_dcs_write_buffer(ctx->dsi, buf, sizeof(buf));
+    if (ret < 0)
+    {
+        DRM_ERROR_RATELIMITED("MIPI DSI DCS write failed for switching page: %d\n", ret);
+
+        return ret;
+    }
+
+    return 0;
+}
 
 static int HG_LTP08_init_sequence(struct HG_LTP08_touchscreen *ctx)
 {
@@ -316,7 +558,10 @@ static int HG_LTP08_init_sequence(struct HG_LTP08_touchscreen *ctx)
     {
         const struct panel_command *cmd = &panel_cmds_init[i];
 
-        ret = send_cmd_data(ctx, cmd->cmd.cmd, cmd->cmd.data);
+        if (cmd->cmd.cmd == 0xFF)
+            ret = switch_page(ctx, cmd->cmd.data);
+        else
+            ret = send_cmd_data(ctx, cmd->cmd.cmd, cmd->cmd.data);
 
         if (cmd->delay)
             msleep(cmd->delay);
