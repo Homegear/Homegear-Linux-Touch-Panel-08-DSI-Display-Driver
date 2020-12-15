@@ -46,36 +46,49 @@ static const struct drm_display_mode default_mode =
     .vdisplay	= 1280,
 
     .vrefresh   = 50,
-    .clock      = 68700,
-    //.clock      = 67800,
+    //.clock      = 68700,
+    //.clock      = 67842, // htotal * vtotal * frame_rate / 1000
+    .clock = 69245, // 50 Hz
 
-#define FRONT_PORCH 0
-#define SYNC_LEN 20
-#define BACK_PORCH 230
+    /*
+    #define FRONT_PORCH 0
+    #define SYNC_LEN 20
+    #define BACK_PORCH 230
+    */
 
-/*
-#define FRONT_PORCH 18
-#define SYNC_LEN 18
-#define BACK_PORCH 18
-*/
+    /*
+    #define FRONT_PORCH 18
+    #define SYNC_LEN 18
+    #define BACK_PORCH 18
+    */
 
-    .hsync_start= 800 + FRONT_PORCH,
-    .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
-    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + BACK_PORCH,
+    /*
+    #define FRONT_PORCH 0
+    #define SYNC_LEN 18
+    #define BACK_PORCH 36
+    */
 
-/*
-#define VFRONT_PORCH 8
-#define VSYNC_LEN 4
-#define VBACK_PORCH 10
-*/
+    #define FRONT_PORCH 0
+    #define SYNC_LEN 18
+    #define BACK_PORCH 228
+
+    .hsync_start= 800 + FRONT_PORCH,                          // 818 originally, 800
+    .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,               // 836 originally, 818
+    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + BACK_PORCH,  // 854 originally, 1046
+
+    /*
+    #define VFRONT_PORCH 8
+    #define VSYNC_LEN 4
+    #define VBACK_PORCH 10
+    */
 
 #define VFRONT_PORCH 30
 #define VSYNC_LEN 4
 #define VBACK_PORCH 10
 
-    .vsync_start= 1280 + VFRONT_PORCH,
-    .vsync_end	= 1280 + VFRONT_PORCH + VSYNC_LEN,
-    .vtotal		= 1280 + VFRONT_PORCH + VSYNC_LEN + VBACK_PORCH,
+    .vsync_start= 1280 + VFRONT_PORCH,                           // 1310
+    .vsync_end	= 1280 + VFRONT_PORCH + VSYNC_LEN,               // 1314
+    .vtotal		= 1280 + VFRONT_PORCH + VSYNC_LEN + VBACK_PORCH, // 1324
 
     .width_mm = 170,
     .height_mm = 106,
@@ -315,7 +328,6 @@ static const struct panel_command panel_cmds_init[] =
     SWITCH_PAGE_CMD(0x03),
     COMMAND_CMD(0x01, 0x00),
     COMMAND_CMD(0x02, 0x00),
-    COMMAND_CMD(0x02, 0x00),
     COMMAND_CMD(0x03, 0x53),
     COMMAND_CMD(0x04, 0x53),
     // page 4
@@ -366,7 +378,7 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x31, 0x00),
     COMMAND_CMD(0x32, 0x00),
     COMMAND_CMD(0x33, 0x00),
-    COMMAND_CMD(0x34, 0x00),
+    COMMAND_CMD(0x34, 0x00), // GPWR1/2 non overlap time 2.62us ?
     COMMAND_CMD(0x35, 0x00),
     COMMAND_CMD(0x36, 0x00),
     COMMAND_CMD(0x37, 0x00),
@@ -445,47 +457,48 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x89, 0x02),
     COMMAND_CMD(0x8A, 0x02),
     SWITCH_PAGE_CMD(0x04),
-    COMMAND_CMD(0x6C, 0x15),
-    COMMAND_CMD(0x6E, 0x30),
-    COMMAND_CMD(0x6F, 0x33),
-    COMMAND_CMD(0x8D, 0x87),
-    COMMAND_CMD(0x87, 0xBA),
+    COMMAND_CMD(0x6C, 0x15), // VCORE Setting ? 0x15 is supposed to be the default (1.5V)
+    COMMAND_CMD(0x6E, 0x30), // Power Control 2 ?
+    COMMAND_CMD(0x6F, 0x33), // Power Control 3 ?
+    COMMAND_CMD(0x8D, 0x87), // Power Control 4 ? But 0x8C is missing...
+    COMMAND_CMD(0x87, 0xBA), // ESD?
     COMMAND_CMD(0x26, 0x76),
     COMMAND_CMD(0xB2, 0xD1),
     COMMAND_CMD(0x35, 0x1F),
     COMMAND_CMD(0x33, 0x14),
-    COMMAND_CMD(0x3A, 0xA9),
+    COMMAND_CMD(0x3A, 0xA9), // power saving?
     COMMAND_CMD(0x38, 0x01),
     COMMAND_CMD(0x39, 0x00),
     SWITCH_PAGE_CMD(0x01),
-    COMMAND_CMD(0x22, 0x0A),
-    COMMAND_CMD(0x31, 0x00),
-    COMMAND_CMD(0x50, 0xC0),
-    COMMAND_CMD(0x51, 0xC0),
-    COMMAND_CMD(0x53, 0x43),
-    COMMAND_CMD(0x55, 0x7A),
-    COMMAND_CMD(0x60, 0x28),
-    COMMAND_CMD(0x2E, 0xC8),
-    COMMAND_CMD(0xA0, 0x01),
-    COMMAND_CMD(0xA1, 0x11),
-    COMMAND_CMD(0xA2, 0x1C),
-    COMMAND_CMD(0xA3, 0x0E),
-    COMMAND_CMD(0xA4, 0x15),
-    COMMAND_CMD(0xA5, 0x28),
-    COMMAND_CMD(0xA6, 0x1C),
-    COMMAND_CMD(0xA7, 0x1E),
-    COMMAND_CMD(0xA8, 0x73),
-    COMMAND_CMD(0xA9, 0x1C),
-    COMMAND_CMD(0xAA, 0x26),
-    COMMAND_CMD(0xAB, 0x63),
-    COMMAND_CMD(0xAC, 0x18),
-    COMMAND_CMD(0xAD, 0x16),
-    COMMAND_CMD(0xAE, 0x4D),
-    COMMAND_CMD(0xAF, 0x1F),
-    COMMAND_CMD(0xB0, 0x2A),
-    COMMAND_CMD(0xB1, 0x4F),
-    COMMAND_CMD(0xB2, 0x5F),
-    COMMAND_CMD(0xB3, 0x39),
+    COMMAND_CMD(0x22, 0x0A), // Set Panel, Operation Mode and Data, Complement Setting  = BGR_PANEL & SS_PANEL for 0x0A
+    // 0x25, 0x26, 0x27, 0x28 - blanking porch control
+    COMMAND_CMD(0x31, 0x00), // Display Inversion - default value 0x0 = Zigzag type3 inversion?
+    COMMAND_CMD(0x50, 0xC0), // Power Control 1
+    COMMAND_CMD(0x51, 0xC0), // Power Control 1
+    COMMAND_CMD(0x53, 0x43), // VCOM Control 1
+    COMMAND_CMD(0x55, 0x7A), // VCOM Control 1
+    COMMAND_CMD(0x60, 0x28), // Source Timing Adjust SDT[5:0]
+    COMMAND_CMD(0x2E, 0xC8), // Gate Number 0xC8 is the default
+    COMMAND_CMD(0xA0, 0x01), // Positive Gamma Correction
+    COMMAND_CMD(0xA1, 0x11), // Positive Gamma Correction
+    COMMAND_CMD(0xA2, 0x1C), // Positive Gamma Correction
+    COMMAND_CMD(0xA3, 0x0E), // Positive Gamma Correction
+    COMMAND_CMD(0xA4, 0x15), // Positive Gamma Correction
+    COMMAND_CMD(0xA5, 0x28), // Positive Gamma Correction
+    COMMAND_CMD(0xA6, 0x1C), // Positive Gamma Correction
+    COMMAND_CMD(0xA7, 0x1E), // Positive Gamma Correction
+    COMMAND_CMD(0xA8, 0x73), // Positive Gamma Correction
+    COMMAND_CMD(0xA9, 0x1C), // Positive Gamma Correction
+    COMMAND_CMD(0xAA, 0x26), // Positive Gamma Correction
+    COMMAND_CMD(0xAB, 0x63), // Positive Gamma Correction
+    COMMAND_CMD(0xAC, 0x18), // Positive Gamma Correction
+    COMMAND_CMD(0xAD, 0x16), // Positive Gamma Correction
+    COMMAND_CMD(0xAE, 0x4D), // Positive Gamma Correction
+    COMMAND_CMD(0xAF, 0x1F), // Positive Gamma Correction
+    COMMAND_CMD(0xB0, 0x2A), // Positive Gamma Correction
+    COMMAND_CMD(0xB1, 0x4F), // Positive Gamma Correction
+    COMMAND_CMD(0xB2, 0x5F), // Positive Gamma Correction
+    COMMAND_CMD(0xB3, 0x39), // Positive Gamma Correction
     COMMAND_CMD(0xC0, 0x01),
     COMMAND_CMD(0xC1, 0x11),
     COMMAND_CMD(0xC2, 0x1C),
@@ -507,9 +520,10 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0xD2, 0x5F),
     COMMAND_CMD(0xD3, 0x39),
     SWITCH_PAGE_CMD(0x00),
-    COMMAND_CMD(0x35, 0x00),
-    CMD_DELAY(0x11, 0x00, 100),
-    CMD_DELAY(0x29, 0x00, 100),
+    COMMAND_CMD(0x35, 0x00), // TE ON
+    CMD_DELAY(0x11, 0x00, 100), // Sleep Out ?
+    CMD_DELAY(0x29, 0x00, 100), // Display ON (OFF is 0x28)
+    CMD_DELAY(0x38, 0x00, 100), // Idle mode off (added later)
 };
 
 
@@ -633,6 +647,14 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
     ret = switch_page(ctx, 0);
     if (ret)
         return ret;
+
+    ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+    if (ret < 0)
+    {
+        printk(KERN_ALERT "Couldn't set tear on!\n");
+
+        //return ret;
+    }
 
     if (!slow_mode)
         dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
@@ -835,7 +857,7 @@ static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
     dsi->lanes = 4;
     dsi->format = MIPI_DSI_FMT_RGB888;
 
-    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST;
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
