@@ -159,3 +159,20 @@ Installing on the device:
 Removing:
 
 `apt remove hgltp08`
+
+
+### Notes about timings
+
+I couldn't drive the panel at 60 Hz no matter what I tried. It seems to almost work, but from time to time the screen shifts (usually partially) sideways (downwards for the rotated case). It is noticeable and annoying.
+
+The safe frequency that seems to work without issues seems to be 50 Hz.
+
+That refresh frequency is available in several ways:
+
+- one that I prefered before switching to the new panel was to adjust the front porch and back porch for horizontal timings
+- also the clock can be modified, I'm currently investigating if this is a better option
+
+The timings do not stay as set in the panel driver. The kms driver adjusts them.
+There aren't available clocks for any value you set, in fact there are several clock values available and depeding on what one sets, the next higher value available is chosen.
+The kms driver then adjusts the timings to obtain a refresh rate as if the clock was at the specified value. 
+The way it works is for example by enlarging the front porch setting (that's why in many cases I set it to zero, it gets bigger than zero with the new clock value selected by the driver).
