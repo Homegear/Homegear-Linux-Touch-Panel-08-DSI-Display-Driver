@@ -48,7 +48,8 @@ static const struct drm_display_mode default_mode =
     .vrefresh   = 50,
     //.clock      = 68700,
     //.clock      = 67842, // htotal * vtotal * frame_rate / 1000
-    .clock = 69245, // 50 Hz
+    //.clock = 69245, // 50 Hz
+    .clock = 56535, // 50 Hz clock for 'standard' settings 18, 18, 18 (or 0, 18, 36)
 
     /*
     #define FRONT_PORCH 0
@@ -62,15 +63,16 @@ static const struct drm_display_mode default_mode =
     #define BACK_PORCH 18
     */
 
-    /*
-    #define FRONT_PORCH 0
-    #define SYNC_LEN 18
-    #define BACK_PORCH 36
-    */
 
     #define FRONT_PORCH 0
     #define SYNC_LEN 18
+    #define BACK_PORCH 36
+
+    /*
+    #define FRONT_PORCH 0
+    #define SYNC_LEN 18
     #define BACK_PORCH 228
+    */
 
     .hsync_start= 800 + FRONT_PORCH,                          // 818 originally, 800
     .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,               // 836 originally, 818
@@ -93,7 +95,7 @@ static const struct drm_display_mode default_mode =
     .width_mm = 170,
     .height_mm = 106,
 
-    .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
+    .flags = 0, //DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
 };
 
 
@@ -326,6 +328,7 @@ static const struct panel_command panel_cmds_init[] =
     */
 
     SWITCH_PAGE_CMD(0x03),
+
     COMMAND_CMD(0x01, 0x00),
     COMMAND_CMD(0x02, 0x00),
     COMMAND_CMD(0x03, 0x53),
@@ -456,7 +459,9 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x88, 0x02),
     COMMAND_CMD(0x89, 0x02),
     COMMAND_CMD(0x8A, 0x02),
+
     SWITCH_PAGE_CMD(0x04),
+
     COMMAND_CMD(0x6C, 0x15), // VCORE Setting ? 0x15 is supposed to be the default (1.5V)
     COMMAND_CMD(0x6E, 0x30), // Power Control 2 ?
     COMMAND_CMD(0x6F, 0x33), // Power Control 3 ?
@@ -469,16 +474,30 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x3A, 0xA9), // power saving?
     COMMAND_CMD(0x38, 0x01),
     COMMAND_CMD(0x39, 0x00),
+
     SWITCH_PAGE_CMD(0x01),
-    COMMAND_CMD(0x22, 0x0A), // Set Panel, Operation Mode and Data, Complement Setting  = BGR_PANEL & SS_PANEL for 0x0A
+
+    //COMMAND_CMD(0x22, 0x08), // Set Panel, Operation Mode and Data, Complement Setting  = BGR_PANEL & SS_PANEL for 0x08 - the 'Source Output Scan Direction' is forward for this setting - what this does compared with the other one is to turn the screen 'upside-down' (for the rotated variant)
+    COMMAND_CMD(0x22, 0x0A), // Set Panel, Operation Mode and Data, Complement Setting  = BGR_PANEL & SS_PANEL for 0x0A - the 'Source Output Scan Direction' is backward for this setting
     // 0x25, 0x26, 0x27, 0x28 - blanking porch control
     COMMAND_CMD(0x31, 0x00), // Display Inversion - default value 0x0 = Zigzag type3 inversion?
+
     COMMAND_CMD(0x50, 0xC0), // Power Control 1
     COMMAND_CMD(0x51, 0xC0), // Power Control 1
     COMMAND_CMD(0x53, 0x43), // VCOM Control 1
     COMMAND_CMD(0x55, 0x7A), // VCOM Control 1
-    COMMAND_CMD(0x60, 0x28), // Source Timing Adjust SDT[5:0]
-    COMMAND_CMD(0x2E, 0xC8), // Gate Number 0xC8 is the default
+
+    COMMAND_CMD(0x60, 0x28), // Source Timing Adjust SDT[5:0] - originally in the initialization sequence
+    //COMMAND_CMD(0x60, 0x14), // Source Timing Adjust SDT[5:0] - default
+
+    // settings from ilitek-ili9881c driver - timings
+    //COMMAND_CMD(0x60, 0x15),
+	//COMMAND_CMD(0x61, 0x01),
+	//COMMAND_CMD(0x62, 0x0C),
+	//COMMAND_CMD(0x63, 0x00),
+	// ************************************
+
+    COMMAND_CMD(0x2E, 0xC8), // Gate Number 0xC8 is the default - the number of lines to drive the LCD at an interval of 4 lines - the default is 1280
     COMMAND_CMD(0xA0, 0x01), // Positive Gamma Correction
     COMMAND_CMD(0xA1, 0x11), // Positive Gamma Correction
     COMMAND_CMD(0xA2, 0x1C), // Positive Gamma Correction
@@ -519,11 +538,15 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0xD1, 0x4F),
     COMMAND_CMD(0xD2, 0x5F),
     COMMAND_CMD(0xD3, 0x39),
+
     SWITCH_PAGE_CMD(0x00),
-    COMMAND_CMD(0x35, 0x00), // TE ON
+
+    COMMAND_CMD(0x55, 0x00), // This is the power save, 0x0 is the default, power save off
+    COMMAND_CMD(0x35, 0x00), // TE ON, only V-Blanking
+    //COMMAND_CMD(0x35, 0x01), // TE ON, not only V-Blanking, but also H-blanking
     CMD_DELAY(0x11, 0x00, 100), // Sleep Out ?
     CMD_DELAY(0x29, 0x00, 100), // Display ON (OFF is 0x28)
-    CMD_DELAY(0x38, 0x00, 100), // Idle mode off (added later)
+//    CMD_DELAY(0x38, 0x00, 100), // Idle mode off (added later)
 };
 
 
@@ -648,6 +671,7 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
     if (ret)
         return ret;
 
+    // also the initialization sequence needs to change for changing this?
     ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
     if (ret < 0)
     {
@@ -856,6 +880,32 @@ static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
 
     dsi->lanes = 4;
     dsi->format = MIPI_DSI_FMT_RGB888;
+
+/* DSI mode flags */
+/* video mode */
+//#define MIPI_DSI_MODE_VIDEO		BIT(0)
+/* video burst mode */
+//#define MIPI_DSI_MODE_VIDEO_BURST	BIT(1)
+/* video pulse mode */
+//#define MIPI_DSI_MODE_VIDEO_SYNC_PULSE	BIT(2)
+/* enable auto vertical count mode */
+//#define MIPI_DSI_MODE_VIDEO_AUTO_VERT	BIT(3)
+/* enable hsync-end packets in vsync-pulse and v-porch area */
+//#define MIPI_DSI_MODE_VIDEO_HSE		BIT(4)
+/* disable hfront-porch area */
+//#define MIPI_DSI_MODE_VIDEO_HFP		BIT(5)
+/* disable hback-porch area */
+//#define MIPI_DSI_MODE_VIDEO_HBP		BIT(6)
+/* disable hsync-active area */
+//#define MIPI_DSI_MODE_VIDEO_HSA		BIT(7)
+/* flush display FIFO on vsync pulse */
+//#define MIPI_DSI_MODE_VSYNC_FLUSH	BIT(8)
+/* disable EoT packets in HS mode */
+//#define MIPI_DSI_MODE_EOT_PACKET	BIT(9)
+/* device supports non-continuous clock behavior (DSI spec 5.6.1) */
+//#define MIPI_DSI_CLOCK_NON_CONTINUOUS	BIT(10)
+/* transmit data in low power */
+//#define MIPI_DSI_MODE_LPM		BIT(11)
 
     dsi->mode_flags |= MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
 
