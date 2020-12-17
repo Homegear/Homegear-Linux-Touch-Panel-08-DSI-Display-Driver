@@ -46,27 +46,36 @@ static const struct drm_display_mode default_mode =
     .vdisplay	= 1280,
 
     .vrefresh   = 50,
-    //.clock      = 68700,
-    //.clock      = 67842, // htotal * vtotal * frame_rate / 1000
-    //.clock = 69245, // 50 Hz
-    .clock = 56535, // 50 Hz clock for 'standard' settings 18, 18, 18 (or 0, 18, 36)
 
+    //.clock      = 68700, // for the old panel
+
+    //.clock      = 67842, // htotal * vtotal * frame_rate / 1000 - value for 60 Hz
+    .clock = 56535, // 50 Hz clock for 'standard' settings 18, 18, 18 (or 0, 18, 36)
+    //.clock = 79149, // 70 Hz for 'standard' settings - ili9881c claims to be able to handle 70 Hz, sort of works, but the tearing effect is worse and the screen is shifted, there are also other ugly effects
+
+    // This is for old panel:
     /*
     #define FRONT_PORCH 0
     #define SYNC_LEN 20
     #define BACK_PORCH 230
     */
 
-    /*
+    // 'standard' values
     #define FRONT_PORCH 18
     #define SYNC_LEN 18
     #define BACK_PORCH 18
+    //#define BACK_PORCH 160 // this is adjusted to get 60 Hz refresh rate from the 70 Hz clock
+
+    //#define FRONT_PORCH 0
+    //#define SYNC_LEN 18
+    //#define BACK_PORCH 36
+
+    // vsync and back porch increased with 50%
+    /*
+    #define FRONT_PORCH 18
+    #define SYNC_LEN 27
+    #define BACK_PORCH 27
     */
-
-
-    #define FRONT_PORCH 0
-    #define SYNC_LEN 18
-    #define BACK_PORCH 36
 
     /*
     #define FRONT_PORCH 0
@@ -78,19 +87,28 @@ static const struct drm_display_mode default_mode =
     .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,               // 836 originally, 818
     .htotal		= 800 + FRONT_PORCH + SYNC_LEN + BACK_PORCH,  // 854 originally, 1046
 
+    // This is for the old panel:
     /*
     #define VFRONT_PORCH 8
     #define VSYNC_LEN 4
     #define VBACK_PORCH 10
     */
 
+// values for vertical are all right:
 #define VFRONT_PORCH 30
 #define VSYNC_LEN 4
 #define VBACK_PORCH 10
 
-    .vsync_start= 1280 + VFRONT_PORCH,                           // 1310
-    .vsync_end	= 1280 + VFRONT_PORCH + VSYNC_LEN,               // 1314
-    .vtotal		= 1280 + VFRONT_PORCH + VSYNC_LEN + VBACK_PORCH, // 1324
+// test increased values with 50% (the clock gets higher than set, but still this does not help)
+/*
+#define VFRONT_PORCH 45
+#define VSYNC_LEN 6
+#define VBACK_PORCH 20
+*/
+
+    .vsync_start= 1280 + VFRONT_PORCH,                           // 1310 or 1325
+    .vsync_end	= 1280 + VFRONT_PORCH + VSYNC_LEN,               // 1314 or 1331
+    .vtotal		= 1280 + VFRONT_PORCH + VSYNC_LEN + VBACK_PORCH, // 1324 or 1351
 
     .width_mm = 170,
     .height_mm = 106,
@@ -484,8 +502,18 @@ static const struct panel_command panel_cmds_init[] =
 
     COMMAND_CMD(0x50, 0xC0), // Power Control 1
     COMMAND_CMD(0x51, 0xC0), // Power Control 1
+
     COMMAND_CMD(0x53, 0x43), // VCOM Control 1
     COMMAND_CMD(0x55, 0x7A), // VCOM Control 1
+
+    // TODO: try this:
+	//COMMAND_CMD(0x53, 0xDC),
+	//COMMAND_CMD(0x55, 0xA7),
+	// or this:
+	//COMMAND_CMD(0x53, 0x4C),
+	//COMMAND_CMD(0x50, 0x87),
+	//COMMAND_CMD(0x51, 0x82),
+	// or try default, which is 7B for 53 and 55, 0 for the other two
 
     COMMAND_CMD(0x60, 0x28), // Source Timing Adjust SDT[5:0] - originally in the initialization sequence
     //COMMAND_CMD(0x60, 0x14), // Source Timing Adjust SDT[5:0] - default
