@@ -6,7 +6,15 @@
 
 #include <video/mipi_display.h>
 
+#include <linux/version.h>
+#if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE || defined(EL8)
+#else
 #include <drm/drmP.h>
+#endif
+#if KERNEL_VERSION(5, 1, 0) <= LINUX_VERSION_CODE || defined(EL8)
+#include <drm/drm_probe_helper.h>
+#endif
+
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_panel.h>
@@ -67,6 +75,8 @@ static const struct drm_display_mode default_mode =
 
     .width_mm = 170,
     .height_mm = 106,
+
+    .flags = DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC,
 };
 
 
@@ -458,7 +468,10 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
 
     ret = mipi_dsi_dcs_set_display_on(dsi);
     if (ret)
+    {
+        printk(KERN_ALERT "Couldn't set display on!\n");
         return ret;
+    }
 
     msleep(20);
 
@@ -524,7 +537,10 @@ static int HG_LTP08_enable(struct drm_panel *panel)
 
     ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
     if (ret < 0)
+    {
+        printk(KERN_ALERT "Couldn't set tear on!\n");
         return ret;
+    }
 
     mipi_dsi_dcs_set_display_on(ctx->dsi);
 
