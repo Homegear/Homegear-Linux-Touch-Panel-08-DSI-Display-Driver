@@ -477,6 +477,8 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
 
     ctx->prepared = true;
 
+    printk(KERN_ALERT "Prepared!\n");
+
     return 0;
 }
 
@@ -548,6 +550,8 @@ static int HG_LTP08_enable(struct drm_panel *panel)
         gpio_set_value_cansleep(ctx->backlightPin, 1);
 
     ctx->enabled = true;
+
+    printk(KERN_ALERT "Enabled!\n");
 
     return 0;
 }
@@ -655,7 +659,7 @@ static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
     dsi->lanes = 4;
     dsi->format = MIPI_DSI_FMT_RGB888;
 
-    dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
+    dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE /* | MIPI_DSI_MODE_LPM*/;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
