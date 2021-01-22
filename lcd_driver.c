@@ -1,10 +1,10 @@
-#include <linux/backlight.h>
+//#include <linux/backlight.h>
 
-#include <linux/gpio/consumer.h>
-#include <linux/of_graph.h>
-#include <linux/of_platform.h>
+//#include <linux/gpio/consumer.h>
+//#include <linux/of_graph.h>
+//#include <linux/of_platform.h>
 
-#include <video/mipi_display.h>
+//#include <video/mipi_display.h>
 
 #include <linux/version.h>
 #if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
@@ -15,16 +15,20 @@
 #include <drm/drm_probe_helper.h>
 #endif
 
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/fb.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_panel.h>
 
-#include <video/display_timing.h>
-#include <video/videomode.h>
-
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/fb.h>
+#include <video/mipi_display.h>
 
 #include <linux/gpio.h>
 
@@ -53,7 +57,10 @@ static const struct drm_display_mode default_mode =
     .hdisplay	= 800,
     .vdisplay	= 1280,
 
-    .vrefresh   = 50,
+    #if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
+    #else
+     .vrefresh   = 50,
+    #endif // KERNEL_VERSION
 
     .clock = 56535,
 
@@ -332,7 +339,7 @@ static int send_cmd_data(struct HG_LTP08_touchscreen *ctx, u8 cmd, u8 data)
     ret = mipi_dsi_dcs_write_buffer(ctx->dsi, buf, sizeof(buf));
     if (ret < 0)
     {
-        DRM_ERROR_RATELIMITED("MIPI DSI DCS write failed: %d\n", ret);
+        printk(KERN_ALERT "MIPI DSI DCS write failed: %d\n", ret);
 
         return ret;
     }
@@ -349,7 +356,7 @@ static int switch_page(struct HG_LTP08_touchscreen *ctx, u8 page)
     ret = mipi_dsi_dcs_write_buffer(ctx->dsi, buf, sizeof(buf));
     if (ret < 0)
     {
-        DRM_ERROR_RATELIMITED("MIPI DSI DCS write failed for switching page: %d\n", ret);
+        printk(KERN_ALERT "MIPI DSI DCS write failed for switching page: %d\n", ret);
 
         return ret;
     }
@@ -575,18 +582,20 @@ static int HG_LTP08_disable(struct drm_panel *panel)
     return 0;
 }
 
-
+#if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
+static int HG_LTP08_get_modes(struct drm_panel *panel, struct drm_connector *connector)
+{
+    struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, &default_mode);
+#else
 static int HG_LTP08_get_modes(struct drm_panel *panel)
 {
     static const u32 bus_format = MEDIA_BUS_FMT_RGB888_1X24;
-    struct drm_display_mode *mode;
+    struct drm_display_mode *mode = drm_mode_duplicate(panel->drm, &default_mode);
+#endif // KERNEL_VERSION
 
-    mode = drm_mode_duplicate(panel->drm, &default_mode);
     if (!mode)
     {
-        DRM_ERROR("failed to add mode %ux%ux@%u\n",
-                  default_mode.hdisplay, default_mode.vdisplay,
-                  default_mode.vrefresh);
+        printk(KERN_ALERT "failed to add mode %ux%ux\n", default_mode.hdisplay, default_mode.vdisplay);
         return -ENOMEM;
     }
 
@@ -594,6 +603,12 @@ static int HG_LTP08_get_modes(struct drm_panel *panel)
 
     mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
 
+#if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
+	drm_mode_probed_add(connector, mode);
+
+	connector->display_info.width_mm = mode->width_mm;
+	connector->display_info.height_mm = mode->height_mm;
+#else
     drm_mode_probed_add(panel->connector, mode);
 
     panel->connector->display_info.width_mm = mode->width_mm;
@@ -602,6 +617,7 @@ static int HG_LTP08_get_modes(struct drm_panel *panel)
     panel->connector->display_info.bpc = 8;
 
     drm_display_info_set_bus_formats(&panel->connector->display_info, &bus_format, 1);
+#endif // KERNEL_VERSION
 
     return 1;
 }
@@ -663,20 +679,17 @@ static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
-    drm_panel_init(&ctx->base);
 
+#if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
+	drm_panel_init(&ctx->base, dev, &HG_LTP08_drm_funcs,
+		       DRM_MODE_CONNECTOR_DSI);
+#else
+    drm_panel_init(&ctx->base);
     ctx->base.dev = dev;
     ctx->base.funcs = &HG_LTP08_drm_funcs;
+#endif // KERNEL_VERSION
 
-    ret = drm_panel_add(&ctx->base);
-    if (ret < 0)
-    {
-        dev_err(dev, "drm_panel_add() failed: %d\n", ret);
-
-        kfree(ctx);
-
-        return ret;
-    }
+    drm_panel_add(&ctx->base);
 
     ret = mipi_dsi_attach(dsi);
     if (ret < 0)
