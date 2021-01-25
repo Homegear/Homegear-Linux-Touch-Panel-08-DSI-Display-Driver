@@ -174,5 +174,96 @@ That refresh frequency is available in several ways:
 
 The timings do not stay as set in the panel driver. The kms driver adjusts them.
 There aren't available clocks for any value you set, in fact there are several clock values available and depeding on what one sets, the next higher value available is chosen.
-The kms driver then adjusts the timings to obtain a refresh rate as if the clock was at the specified value. 
+The kms driver then adjusts the timings to obtain a refresh rate as if the clock was at the specified value.
 The way it works is for example by enlarging the front porch setting (that's why in many cases I set it to zero, it gets bigger than zero with the new clock value selected by the driver).
+
+### Compiling with the 5.10.y
+
+It look like somewhere between kernel 4.19.127-v7+ and 5.4,83-v7+ they broke the vc4 video driver, the dsi part.
+The bug may be related with the issue mentioned here: https://www.raspberrypi.org/forums/viewtopic.php?f=98&t=282974&sid=891de7d58678d73bbd70e4616098398e&start=75 (see 6by9 comment, "I've just found an error in the register definitions").
+
+Anyway, I tested and the driver again works with 5.10.y kernel. I needed to do some changes in order to have it compiled, but still it doesn't compile 'out of the box'.
+
+I'll try to describe here what it takes to have it compiled and installed with the new kernel.
+
+First, install the RaspberryOS image from Jan 2021. With this one, the panel driver won't work. It's a good idea to uninstall first the panel driver before updating the kernel.
+Have the 5.10.y kernel installed by issuing `rpi-update`.
+
+Unfortunately, this won't have the panel driver working, because:
+- for now the kernel headers for 5.10.y are not in the repository, installing those will install the old version
+- they broke dkms
+
+The next step would be to install the kernel sources for 5.10.y (for the headers):
+`git clone --depth=1 --branch 5.10.y https://github.com/raspberrypi/linux`
+
+I do this in /home/pi, so the sources will be in /home/pi/linux.
+
+Be sure to install the headers in from the repo, to ensure they won't interfere later with the headers manually installed:
+
+`apt-get install raspberrypi-kernel-headers`
+
+This will install - for now - the headers for the old kernel.
+
+Now, configure the kernel sources (in /home/pi/linux):
+
+`KERNEL=kernel7;make bcm2709_defconfig`
+
+Install the headers:
+
+`make headers_install`
+
+This one is for dkms:
+
+In /lib/modules/5.10... directories, issue a:
+
+`ln -s /home/pi/linux/ build`
+
+
+In linux/scripts, create a file called module.lds, with contents:
+
+```
+/*
+ * Common module linker script, always used when linking a module.
+ * Archs are free to supply their own linker scripts.  ld will
+ * combine them automatically.
+ */
+SECTIONS {
+        /DISCARD/ : {
+                *(.discard)
+                *(.discard.*)
+        }
+
+        __ksymtab               0 : { *(SORT(___ksymtab+*)) }
+        __ksymtab_gpl           0 : { *(SORT(___ksymtab_gpl+*)) }
+        __ksymtab_unused        0 : { *(SORT(___ksymtab_unused+*)) }
+        __ksymtab_unused_gpl    0 : { *(SORT(___ksymtab_unused_gpl+*)) }
+        __ksymtab_gpl_future    0 : { *(SORT(___ksymtab_gpl_future+*)) }
+        __kcrctab               0 : { *(SORT(___kcrctab+*)) }
+        __kcrctab_gpl           0 : { *(SORT(___kcrctab_gpl+*)) }
+        __kcrctab_unused        0 : { *(SORT(___kcrctab_unused+*)) }
+        __kcrctab_unused_gpl    0 : { *(SORT(___kcrctab_unused_gpl+*)) }
+        __kcrctab_gpl_future    0 : { *(SORT(___kcrctab_gpl_future+*)) }
+
+        .init_array             0 : ALIGN(8) { *(SORT(.init_array.*)) *(.init_array) }
+
+        __jump_table            0 : ALIGN(8) { KEEP(*(__jump_table)) }
+}
+
+/* SPDX-License-Identifier: GPL-2.0 */
+SECTIONS {
+        .plt : { BYTE(0) }
+        .init.plt : { BYTE(0) }
+}
+```
+
+The content is taken from module.lds.S with the include replaced with the contents of the included file.
+
+For more on this, see: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1906131 and https://forum.armbian.com/topic/16670-plt-sections-missing-using-out-of-tree-module-on-armbian-20116-buster-orangepizero/
+
+After this, installing the panel driver should work:
+
+`apt install ./hgltp08_1.0_all.deb`
+
+There is a chance that they also fixed the issue that occured with 60 Hz in the older kernels, I'll try to see if they did after I'll receive the new CM3+ with more flash memory.
+
+

@@ -1,11 +1,3 @@
-//#include <linux/backlight.h>
-
-//#include <linux/gpio/consumer.h>
-//#include <linux/of_graph.h>
-//#include <linux/of_platform.h>
-
-//#include <video/mipi_display.h>
-
 #include <linux/version.h>
 #if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
 #else
@@ -386,7 +378,6 @@ static int HG_LTP08_init_sequence(struct HG_LTP08_touchscreen *ctx)
     return 0;
 }
 
-
 static int HG_LTP08_prepare(struct drm_panel *panel)
 {
     struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
@@ -582,12 +573,13 @@ static int HG_LTP08_disable(struct drm_panel *panel)
     return 0;
 }
 
+static int HG_LTP08_get_modes(struct drm_panel *panel
 #if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
-static int HG_LTP08_get_modes(struct drm_panel *panel, struct drm_connector *connector)
+                            , struct drm_connector *connector)
 {
     struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, &default_mode);
 #else
-static int HG_LTP08_get_modes(struct drm_panel *panel)
+                            )
 {
     static const u32 bus_format = MEDIA_BUS_FMT_RGB888_1X24;
     struct drm_display_mode *mode = drm_mode_duplicate(panel->drm, &default_mode);
