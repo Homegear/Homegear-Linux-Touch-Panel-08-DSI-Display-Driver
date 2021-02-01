@@ -50,11 +50,12 @@ static const struct drm_display_mode default_mode =
     .vdisplay	= 1280,
 
     #if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
+    .clock = 67842,
     #else
-     .vrefresh   = 50,
+    .vrefresh   = 50,
+    .clock = 56535,
     #endif // KERNEL_VERSION
 
-    .clock = 56535,
 
 #define FRONT_PORCH 18
 #define SYNC_LEN 18
