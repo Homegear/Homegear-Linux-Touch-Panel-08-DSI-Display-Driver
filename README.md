@@ -179,7 +179,7 @@ The way it works is for example by enlarging the front porch setting (that's why
 
 ### Compiling with the 5.10.y
 
-It look like somewhere between kernel 4.19.127-v7+ and 5.4,83-v7+ they broke the vc4 video driver, the dsi part.
+It looks like somewhere between kernel 4.19.127-v7+ and 5.4,83-v7+ they broke the vc4 video driver, the dsi part.
 The bug may be related with the issue mentioned here: https://www.raspberrypi.org/forums/viewtopic.php?f=98&t=282974&sid=891de7d58678d73bbd70e4616098398e&start=75 (see 6by9 comment, "I've just found an error in the register definitions").
 
 Anyway, I tested and the driver again works with 5.10.y kernel. I needed to do some changes in order to have it compiled, but still it doesn't compile 'out of the box'.
@@ -194,7 +194,7 @@ Unfortunately, this won't have the panel driver working, because:
 - they broke dkms
 
 The next step would be to install the kernel sources for 5.10.y (for the headers):
-`git clone --depth=1 --branch 5.10.y https://github.com/raspberrypi/linux`
+`git clone --depth=1 --branch rpi-5.10.y https://github.com/raspberrypi/linux`
 
 I do this in /home/pi, so the sources will be in /home/pi/linux.
 
@@ -207,6 +207,8 @@ This will install - for now - the headers for the old kernel.
 Now, configure the kernel sources (in /home/pi/linux):
 
 `KERNEL=kernel7;make bcm2709_defconfig`
+
+In order to do that, one might need to install additional packages, like flex and bison.
 
 Install the headers:
 
@@ -259,6 +261,10 @@ SECTIONS {
 The content is taken from module.lds.S with the include replaced with the contents of the included file.
 
 For more on this, see: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1906131 and https://forum.armbian.com/topic/16670-plt-sections-missing-using-out-of-tree-module-on-armbian-20116-buster-orangepizero/
+
+Install libssl-dev package. After that, issue a
+`make prepare` in the linux directory.
+
 
 After this, installing the panel driver should work:
 
