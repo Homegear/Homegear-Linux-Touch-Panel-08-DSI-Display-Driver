@@ -272,4 +272,5 @@ After this, installing the panel driver should work:
 
 There is a chance that they also fixed the issue that occured with 60 Hz in the older kernels, I'll try to see if they did after I'll receive the new CM3+ with more flash memory.
 
+For 5.10 I also had to enable i2c in config.txt, otherwise touch won't work. One of the uncommented lines did the trick.
 
