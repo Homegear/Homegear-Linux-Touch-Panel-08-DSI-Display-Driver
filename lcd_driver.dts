@@ -68,6 +68,8 @@
 				interrupts = <17 2>; /* interrupt no, high to low edge triggered */
 				irq-gpios = <&gpio 17 0>;
 				reset-gpios = <&gpio 16 0>;
+				touchscreen-size-x = <800>;
+				touchscreen-size-y = <1280>;
 			};
 		};
 	};

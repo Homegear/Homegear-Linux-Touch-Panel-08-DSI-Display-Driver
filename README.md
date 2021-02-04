@@ -106,11 +106,17 @@ Screen:
 
 `xrandr --output DSI-1 --rotate left`
 
-This will rotate only the screen, but not the touch input. To also rotate the touch input, use:
+This will rotate only the screen, but not the touch input. 
+
+NOTE: This info is obsolete, it's kept here just for the alternative:
+To also rotate the touch input, use:
 
 `xinput --set-prop 6 138 0 -1 1 1 0 0 0 0 1`
 
 For some reason, the 'prop' can change, so check its number with xinput to be sure.
+
+Updated info: Now there will be a rule installed in /etc/udev/rules.d/99-goodix.rules that will rotate the input automatically without the above manual setting.
+
 
 I don't think if this can help or not, but adding in cmdline.txt the boot option:
 

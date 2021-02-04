@@ -22,6 +22,7 @@ override_dh_install:
 	dh_install Makefile /usr/src/HG_LTP08-1.0/
 	dh_install dkms.conf /usr/src/HG_LTP08-1.0/
 	dh_install HG_LTP08_lcd_driver.dtbo /boot/overlays/
+	dh_install 99-goodix.rules /etc/udev/rules.d/
 
 override_dh_dkms:
 	dh_dkms -V $(DEB_VERSION_UPSTREAM)
