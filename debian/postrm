@@ -4,12 +4,12 @@ case "$1" in
 	remove|abort-install|abort-upgrade)
 		# This package is being removed, but its configuration has not yet
 		# been purged.
-		rm -f /boot/overlays/HG_LTP08_lcd_driver.dtbo > /dev/null 2>&1
+		rm -f /boot/overlays/hgltp08.dtbo > /dev/null 2>&1
 		rm -f /etc/udev/rules.d/99-goodix.rules > /dev/null 2>&1
 		;;
 
 	purge)
-		rm -f /boot/overlays/HG_LTP08_lcd_driver.dtbo > /dev/null 2>&1
+		rm -f /boot/overlays/hgltp08.dtbo > /dev/null 2>&1
 		rm -f /etc/udev/rules.d/99-goodix.rules > /dev/null 2>&1
 	        ;;
 

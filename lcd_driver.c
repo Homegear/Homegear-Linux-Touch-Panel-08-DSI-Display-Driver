@@ -28,7 +28,7 @@
 #define DEFAULT_GPIO_BACKLIGHT_PIN 28
 
 
-struct HG_LTP08_touchscreen
+struct hgltp08_touchscreen
 {
     struct drm_panel base;
     struct mipi_dsi_device *dsi;
@@ -80,9 +80,9 @@ static const struct drm_display_mode default_mode =
 };
 
 
-static struct HG_LTP08_touchscreen *panel_to_ts(struct drm_panel *panel)
+static struct hgltp08_touchscreen *panel_to_ts(struct drm_panel *panel)
 {
-    return container_of(panel, struct HG_LTP08_touchscreen, base);
+    return container_of(panel, struct hgltp08_touchscreen, base);
 }
 
 struct panel_command
@@ -324,7 +324,7 @@ static const struct panel_command panel_cmds_init[] =
 };
 
 
-static int send_cmd_data(struct HG_LTP08_touchscreen *ctx, u8 cmd, u8 data)
+static int send_cmd_data(struct hgltp08_touchscreen *ctx, u8 cmd, u8 data)
 {
     u8 buf[2] = { cmd, data };
     int ret;
@@ -341,7 +341,7 @@ static int send_cmd_data(struct HG_LTP08_touchscreen *ctx, u8 cmd, u8 data)
 }
 
 
-static int switch_page(struct HG_LTP08_touchscreen *ctx, u8 page)
+static int switch_page(struct hgltp08_touchscreen *ctx, u8 page)
 {
     u8 buf[4] = { 0xFF, 0x98, 0x81, page };
     int ret;
@@ -357,7 +357,7 @@ static int switch_page(struct HG_LTP08_touchscreen *ctx, u8 page)
     return 0;
 }
 
-static int HG_LTP08_init_sequence(struct HG_LTP08_touchscreen *ctx)
+static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
 {
     int i, ret;
 
@@ -379,9 +379,9 @@ static int HG_LTP08_init_sequence(struct HG_LTP08_touchscreen *ctx)
     return 0;
 }
 
-static int HG_LTP08_prepare(struct drm_panel *panel)
+static int hgltp08_prepare(struct drm_panel *panel)
 {
-    struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
+    struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     struct mipi_dsi_device *dsi = ctx->dsi;
     int ret;
     bool slow_mode;
@@ -434,7 +434,7 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
     if (!slow_mode)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-    ret = HG_LTP08_init_sequence(ctx);
+    ret = hgltp08_init_sequence(ctx);
     if (ret)
         return ret;
 
@@ -482,9 +482,9 @@ static int HG_LTP08_prepare(struct drm_panel *panel)
 }
 
 
-static int HG_LTP08_unprepare(struct drm_panel *panel)
+static int hgltp08_unprepare(struct drm_panel *panel)
 {
-    struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
+    struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     struct mipi_dsi_device *dsi = ctx->dsi;
     int ret;
 
@@ -524,9 +524,9 @@ static int HG_LTP08_unprepare(struct drm_panel *panel)
 }
 
 
-static int HG_LTP08_enable(struct drm_panel *panel)
+static int hgltp08_enable(struct drm_panel *panel)
 {
-    struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
+    struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     int ret;
 
     if (ctx->enabled)
@@ -555,9 +555,9 @@ static int HG_LTP08_enable(struct drm_panel *panel)
     return 0;
 }
 
-static int HG_LTP08_disable(struct drm_panel *panel)
+static int hgltp08_disable(struct drm_panel *panel)
 {
-    struct HG_LTP08_touchscreen *ctx = panel_to_ts(panel);
+    struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
 
     if (!ctx->enabled)
         return 0;
@@ -574,7 +574,7 @@ static int HG_LTP08_disable(struct drm_panel *panel)
     return 0;
 }
 
-static int HG_LTP08_get_modes(struct drm_panel *panel
+static int hgltp08_get_modes(struct drm_panel *panel
 #if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
                             , struct drm_connector *connector)
 {
@@ -615,22 +615,22 @@ static int HG_LTP08_get_modes(struct drm_panel *panel
     return 1;
 }
 
-static const struct drm_panel_funcs HG_LTP08_drm_funcs =
+static const struct drm_panel_funcs hgltp08_drm_funcs =
 {
-    .disable = HG_LTP08_disable,
-    .unprepare = HG_LTP08_unprepare,
-    .prepare = HG_LTP08_prepare,
-    .enable = HG_LTP08_enable,
-    .get_modes = HG_LTP08_get_modes,
+    .disable = hgltp08_disable,
+    .unprepare = hgltp08_unprepare,
+    .prepare = hgltp08_prepare,
+    .enable = hgltp08_enable,
+    .get_modes = hgltp08_get_modes,
 };
 
-static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
+static int hgltp08_probe(struct mipi_dsi_device *dsi)
 {
     int ret;
     const __be32 *prop;
 
     struct device *dev = &dsi->dev;
-    struct HG_LTP08_touchscreen *ctx;
+    struct hgltp08_touchscreen *ctx;
 
     printk(KERN_ALERT "Probing!\n");
 
@@ -674,12 +674,12 @@ static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
 
 
 #if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
-	drm_panel_init(&ctx->base, dev, &HG_LTP08_drm_funcs,
+	drm_panel_init(&ctx->base, dev, &hgltp08_drm_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 #else
     drm_panel_init(&ctx->base);
     ctx->base.dev = dev;
-    ctx->base.funcs = &HG_LTP08_drm_funcs;
+    ctx->base.funcs = &hgltp08_drm_funcs;
 #endif // KERNEL_VERSION
 
     drm_panel_add(&ctx->base);
@@ -699,9 +699,9 @@ static int HG_LTP08_probe(struct mipi_dsi_device *dsi)
     return 0;
 }
 
-static int HG_LTP08_remove(struct mipi_dsi_device *dsi)
+static int hgltp08_remove(struct mipi_dsi_device *dsi)
 {
-    struct HG_LTP08_touchscreen *ctx = mipi_dsi_get_drvdata(dsi);
+    struct hgltp08_touchscreen *ctx = mipi_dsi_get_drvdata(dsi);
 
     mipi_dsi_detach(dsi);
     drm_panel_remove(&ctx->base);
@@ -713,25 +713,25 @@ static int HG_LTP08_remove(struct mipi_dsi_device *dsi)
     return 0;
 }
 
-static const struct of_device_id HG_LTP08_touchscreen_of_match[] =
+static const struct of_device_id hgltp08_touchscreen_of_match[] =
 {
-    { .compatible = "HG_LTP08" },
+    { .compatible = "hgltp08" },
     { }
 };
-MODULE_DEVICE_TABLE(of, HG_LTP08_touchscreen_of_match);
+MODULE_DEVICE_TABLE(of, hgltp08_touchscreen_of_match);
 
 
 
-static struct mipi_dsi_driver panel_HG_LTP08_dsi_driver =
+static struct mipi_dsi_driver panel_hgltp08_dsi_driver =
 {
     .driver = {
-        .name = "panel_HG_LTP08",
-        .of_match_table = HG_LTP08_touchscreen_of_match,
+        .name = "panel_hgltp08",
+        .of_match_table = hgltp08_touchscreen_of_match,
     },
-    .probe = HG_LTP08_probe,
-    .remove = HG_LTP08_remove,
+    .probe = hgltp08_probe,
+    .remove = hgltp08_remove,
 };
-module_mipi_dsi_driver(panel_HG_LTP08_dsi_driver);
+module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");

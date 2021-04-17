@@ -24,7 +24,7 @@
             };
 
             panel_test: panel@0 {
-                compatible = "HG_LTP08";
+                compatible = "hgltp08";
                 reg=<0>;
                 label= "Homegear LTP08 Multitouch 8\" Display";
                 vc4_dsi = <&dsi1>;

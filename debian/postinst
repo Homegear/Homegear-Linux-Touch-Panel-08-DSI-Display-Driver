@@ -4,7 +4,7 @@ case $1 in
 	# Configure this package. If the package must prompt the user for
 	# information, do it here.
 	configure)
-		dkms install -m HG_LTP08 -v 1.0
+		dkms install -m hgltp08 -v 1.0
 		;;
 
 	# Back out of an attempt to upgrade this package FROM THIS VERSION
