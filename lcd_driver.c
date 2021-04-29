@@ -580,8 +580,21 @@ static int hgltp08_enable(struct drm_panel *panel)
 
     printk(KERN_ALERT "Enabling!\n");
 
-    drm_panel_prepare(panel);
+    cmdcnt = 0;
+    do
+    {
+        msleep(10);
+        ret = drm_panel_prepare(panel);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
 
+    if (ret < 0)
+    {
+        printk(KERN_ALERT "Couldn't prepare the panel!\n");
+    }
+
+    cmdcnt = 0;
     do
     {
         msleep(10);
