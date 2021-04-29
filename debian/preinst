@@ -1,0 +1,13 @@
+#!/bin/sh
+
+case "$1" in
+	install|upgrade|abort-upgrade)
+		# Remove all old versions
+		dkms remove hgltp08/1.0 --all
+		dkms remove hgltp08/1.0.1 --all
+		;;
+esac
+
+#DEBHELPER#
+
+exit 0

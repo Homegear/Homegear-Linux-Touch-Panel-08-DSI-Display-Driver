@@ -1,10 +1,16 @@
+hgltp08 (1.0.2) buster; urgency=medium
+
+  * Fix to Debian package.
+
+ -- Adrian Roman <a.roman@ib-company.de>  Fri, 30 Apr 2021 00:16:00 +0200
+
 hgltp08 (1.0.1) buster; urgency=medium
 
   * Fixed: Display driver crashing sometimes.
 
- -- Adrian Roman <a.roman@ib-company.de>  Wed, 29 Jan 2020 13:46:02 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Thu, 29 Apr 2020 23:58:00 +0200
 
-hgltp08 (1.0.1) buster; urgency=medium
+hgltp08 (1.0) buster; urgency=medium
 
   * Initial release.
 
