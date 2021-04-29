@@ -1,5 +1,11 @@
-hgltp08 (1.0) buster; urgency=medium
+hgltp08 (1.0.1) buster; urgency=medium
+
+  * Fixed: Display driver crashing sometimes.
+
+ -- Adrian Roman <a.roman@ib-company.de>  Wed, 29 Jan 2020 13:46:02 +0200
+
+hgltp08 (1.0.1) buster; urgency=medium
 
   * Initial release.
 
- -- Sathya Laufer <sathya@laufers.net>  Wed, 29 Jan 2020 13:46:02 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Wed, 29 Jan 2020 13:46:02 +0200
