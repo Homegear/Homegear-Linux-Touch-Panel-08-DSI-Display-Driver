@@ -27,6 +27,7 @@
 #define DEFAULT_GPIO_RESET_PIN 13
 #define DEFAULT_GPIO_BACKLIGHT_PIN 28
 
+#define CMD_RETRIES 3
 
 struct hgltp08_touchscreen
 {
@@ -384,6 +385,7 @@ static int hgltp08_prepare(struct drm_panel *panel)
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     struct mipi_dsi_device *dsi = ctx->dsi;
     int ret;
+    int cmdcnt;
     bool slow_mode;
 
     if (ctx->prepared)
@@ -434,20 +436,50 @@ static int hgltp08_prepare(struct drm_panel *panel)
     if (!slow_mode)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-    ret = hgltp08_init_sequence(ctx);
-    if (ret)
-        return ret;
+    cmdcnt = 0;
+    do
+    {
+        msleep(10);
+        ret = hgltp08_init_sequence(ctx);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
 
-    ret = switch_page(ctx, 0);
     if (ret)
-        return ret;
+    {
+        printk(KERN_ALERT "Couldn't send initialization commands!\n");
 
-    ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+        return ret;
+    }
+
+    cmdcnt = 0;
+    do
+    {
+        msleep(10);
+        ret = switch_page(ctx, 0);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
+
+    if (ret)
+    {
+        printk(KERN_ALERT "Couldn't switch page!\n");
+
+        return ret;
+    }
+
+    cmdcnt = 0;
+    do
+    {
+        msleep(10);
+        ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
+
     if (ret < 0)
     {
         printk(KERN_ALERT "Couldn't set tear on!\n");
-
-        return ret;
     }
 
     if (!slow_mode)
@@ -455,21 +487,34 @@ static int hgltp08_prepare(struct drm_panel *panel)
 
     msleep(125);
 
-    ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
+    cmdcnt = 0;
+    do
+    {
+        msleep(10);
+        ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
+
     if (ret)
     {
         printk(KERN_ALERT "Couldn't exit sleep mode!\n");
-
-        return ret;
     }
 
     msleep(125);
 
-    ret = mipi_dsi_dcs_set_display_on(dsi);
+    cmdcnt = 0;
+    do
+    {
+        msleep(10);
+        ret = mipi_dsi_dcs_set_display_on(dsi);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
+
     if (ret)
     {
         printk(KERN_ALERT "Couldn't set display on!\n");
-        return ret;
     }
 
     msleep(20);
@@ -528,6 +573,7 @@ static int hgltp08_enable(struct drm_panel *panel)
 {
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     int ret;
+    int cmdcnt;
 
     if (ctx->enabled)
         return 0;
@@ -536,14 +582,33 @@ static int hgltp08_enable(struct drm_panel *panel)
 
     drm_panel_prepare(panel);
 
-    ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+    do
+    {
+        msleep(10);
+        ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
+
     if (ret < 0)
     {
         printk(KERN_ALERT "Couldn't set tear on!\n");
-        return ret;
     }
 
-    mipi_dsi_dcs_set_display_on(ctx->dsi);
+    cmdcnt = 0;
+    do
+    {
+        msleep(10);
+        ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
+
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
+
+    if (ret)
+    {
+        printk(KERN_ALERT "Couldn't set display on!\n");
+    }
 
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 1);
