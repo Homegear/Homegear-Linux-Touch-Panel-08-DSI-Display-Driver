@@ -28,6 +28,7 @@
 #define DEFAULT_GPIO_BACKLIGHT_PIN 28
 
 #define CMD_RETRIES 3
+#define RETRY_DELAY 50
 
 struct hgltp08_touchscreen
 {
@@ -439,8 +440,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        msleep(10);
         ret = hgltp08_init_sequence(ctx);
+        if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
     while (ret && cmdcnt <= CMD_RETRIES);
@@ -455,8 +456,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        msleep(10);
         ret = switch_page(ctx, 0);
+        if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
     while (ret && cmdcnt <= CMD_RETRIES);
@@ -471,8 +472,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        msleep(10);
         ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+        if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
     while (ret && cmdcnt <= CMD_RETRIES);
@@ -490,8 +491,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        msleep(10);
         ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
+        if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
     while (ret && cmdcnt <= CMD_RETRIES);
@@ -506,8 +507,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        msleep(10);
         ret = mipi_dsi_dcs_set_display_on(dsi);
+        if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
     while (ret && cmdcnt <= CMD_RETRIES);
@@ -583,8 +584,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        msleep(10);
         ret = drm_panel_prepare(panel);
+        if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
     while (ret && cmdcnt <= CMD_RETRIES);
@@ -597,8 +598,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        msleep(10);
         ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+        if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
     while (ret && cmdcnt <= CMD_RETRIES);
@@ -611,9 +612,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        msleep(10);
         ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
-
+        if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
     while (ret && cmdcnt <= CMD_RETRIES);
