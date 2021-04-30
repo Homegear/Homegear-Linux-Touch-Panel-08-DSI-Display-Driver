@@ -24,11 +24,23 @@
 
 #include <linux/gpio.h>
 
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0)
+#define HAVE_PROC_OPS
+#endif
+
 #define DEFAULT_GPIO_RESET_PIN 13
 #define DEFAULT_GPIO_BACKLIGHT_PIN 28
 
 #define CMD_RETRIES 3
 #define RETRY_DELAY 50
+
+
+static atomic_t errorFlag = ATOMIC_INIT(0);
+struct proc_dir_entry *procFile;
+
 
 struct hgltp08_touchscreen
 {
@@ -326,6 +338,42 @@ static const struct panel_command panel_cmds_init[] =
 };
 
 
+static ssize_t procfile_read(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
+{
+  int ef;
+  char buf[1];
+
+  if (ubuf == NULL || count <= 0)
+    return 0;
+
+  if (ppos == NULL || *ppos > 0)
+    return 0;//return -EINVAL;
+
+  ef = atomic_read(&errorFlag);
+  buf[0] = ef ? '1' : '0';
+
+  if(copy_to_user(ubuf, buf, 1))
+    return -EFAULT;
+
+  *ppos = 1;
+
+  return 1;
+}
+
+
+static struct proc_dir_entry *ent;
+
+#ifdef HAVE_PROC_OPS
+static const struct proc_ops proc_operations = {
+      .proc_read  = procfile_read,
+#else
+static const struct file_operations proc_operations = {
+      .owner = THIS_MODULE,
+      .read  = procfile_read,
+#endif
+};
+
+
 static int send_cmd_data(struct hgltp08_touchscreen *ctx, u8 cmd, u8 data)
 {
     u8 buf[2] = { cmd, data };
@@ -393,6 +441,11 @@ static int hgltp08_prepare(struct drm_panel *panel)
         return 0;
 
     printk(KERN_ALERT "Preparing!\n");
+
+
+    procFile = proc_create("hgltp08", 0444, NULL, &proc_operations);
+
+
     if (!dsi)
         printk(KERN_ALERT "No DSI device!\n");
 
@@ -481,6 +534,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     if (ret < 0)
     {
         printk(KERN_ALERT "Couldn't set tear on!\n");
+
+        atomic_set(&errorFlag, 1);
     }
 
     if (!slow_mode)
@@ -500,6 +555,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     if (ret)
     {
         printk(KERN_ALERT "Couldn't exit sleep mode!\n");
+
+        atomic_set(&errorFlag, 1);
     }
 
     msleep(125);
@@ -516,6 +573,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     if (ret)
     {
         printk(KERN_ALERT "Couldn't set display on!\n");
+
+        atomic_set(&errorFlag, 1);
     }
 
     msleep(20);
@@ -538,6 +597,8 @@ static int hgltp08_unprepare(struct drm_panel *panel)
         return 0;
 
     printk(KERN_ALERT "Unprepare!\n");
+
+    proc_remove(ent);
 
     ret = mipi_dsi_dcs_set_display_off(dsi);
     if (ret)
@@ -593,6 +654,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     if (ret < 0)
     {
         printk(KERN_ALERT "Couldn't prepare the panel!\n");
+
+        atomic_set(&errorFlag, 1);
     }
 
     cmdcnt = 0;
@@ -607,6 +670,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     if (ret < 0)
     {
         printk(KERN_ALERT "Couldn't set tear on!\n");
+
+        atomic_set(&errorFlag, 1);
     }
 
     cmdcnt = 0;
@@ -621,6 +686,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     if (ret)
     {
         printk(KERN_ALERT "Couldn't set display on!\n");
+
+        atomic_set(&errorFlag, 1);
     }
 
     if (ctx->gpioBacklightD)
@@ -791,6 +858,7 @@ static int hgltp08_remove(struct mipi_dsi_device *dsi)
     return 0;
 }
 
+
 static const struct of_device_id hgltp08_touchscreen_of_match[] =
 {
     { .compatible = "hgltp08" },
@@ -814,4 +882,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.2");
+MODULE_VERSION("1.0.3");
