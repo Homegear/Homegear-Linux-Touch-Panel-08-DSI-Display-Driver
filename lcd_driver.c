@@ -361,8 +361,6 @@ static ssize_t procfile_read(struct file *file, char __user *ubuf, size_t count,
 }
 
 
-static struct proc_dir_entry *ent;
-
 #ifdef HAVE_PROC_OPS
 static const struct proc_ops proc_operations = {
       .proc_read  = procfile_read,
@@ -598,7 +596,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 
     printk(KERN_ALERT "Unprepare!\n");
 
-    proc_remove(ent);
+    proc_remove(procFile);
 
     ret = mipi_dsi_dcs_set_display_off(dsi);
     if (ret)
