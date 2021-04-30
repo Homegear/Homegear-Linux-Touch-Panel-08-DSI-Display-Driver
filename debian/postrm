@@ -5,7 +5,6 @@ case "$1" in
 		# This package is being removed, but its configuration has not yet
 		# been purged.
 		rm -f /boot/overlays/hgltp08.dtbo > /dev/null 2>&1
-		rm -f /etc/udev/rules.d/99-goodix.rules > /dev/null 2>&1
 		;;
 
 	purge)
