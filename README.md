@@ -280,3 +280,10 @@ There is a chance that they also fixed the issue that occured with 60 Hz in the 
 
 For 5.10 I also had to enable i2c in config.txt, otherwise touch won't work. One of the uncommented lines did the trick.
 
+
+### Error workarounds
+
+It seems that the vc4 driver has some issues and in some circumstances it fails to send DSI commands. In such cases it appears to 'restart' something.
+The panel driver tries to detect such situations and attempts to retry sending the commands (three times at this moment, but that's easy to change) after waiting a bit (time interval is currently 50 ms, but it's easy to be changed as well).
+
+If the recovery procedure does not work, now the driver exposes `/proc/hgltp08` read only file that contains a single char, '0' if no error was detected, '1' if an error was detected. The info can be used to recover the issue by a script that watches it (for example by rebooting).
