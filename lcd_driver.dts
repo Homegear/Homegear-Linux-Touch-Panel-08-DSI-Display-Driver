@@ -30,6 +30,13 @@
                 vc4_dsi = <&dsi1>;
                 reset = <13>;
 		backlight = <28>;
+		clock = <56535>;
+		hsync_start = <818>;
+		hsync_end = <836>;
+		htotal = <854>;
+		vsync_start = <1310>;
+		vsync_end = <1314>;
+		vtotal = <1324>;
                 port {
                     panel_dsi_in: endpoint {
                         remote-endpoint = <&dsi1_out_port>;

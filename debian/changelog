@@ -1,3 +1,9 @@
+hgltp08 (1.0.4) buster; urgency=medium
+
+  * Added params reading from device tree.
+
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 3 Mar 2021 17:00:00 +0200
+
 hgltp08 (1.0.3) buster; urgency=medium
 
   * Added proc error info.

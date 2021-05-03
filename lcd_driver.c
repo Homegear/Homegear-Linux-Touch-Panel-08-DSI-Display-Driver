@@ -58,7 +58,7 @@ struct hgltp08_touchscreen
 };
 
 
-static const struct drm_display_mode default_mode =
+static struct drm_display_mode default_mode =
 {
     .hdisplay	= 800,
     .vdisplay	= 1280,
@@ -700,12 +700,28 @@ static int hgltp08_enable(struct drm_panel *panel)
 
 static int hgltp08_disable(struct drm_panel *panel)
 {
+    int cmdcnt;
+    int ret;
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
 
     if (!ctx->enabled)
         return 0;
 
-    mipi_dsi_dcs_set_display_off(ctx->dsi);
+    cmdcnt = 0;
+    do
+    {
+        ret = mipi_dsi_dcs_set_display_off(ctx->dsi);
+        if (ret) msleep(RETRY_DELAY);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
+
+    if (ret)
+    {
+        printk(KERN_ALERT "Couldn't set display off!\n");
+
+        atomic_set(&errorFlag, 1);
+    }
 
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 0);
@@ -776,6 +792,73 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
     struct hgltp08_touchscreen *ctx;
 
     printk(KERN_ALERT "Probing!\n");
+
+    // read overwrites of panel parameters from device tree
+
+    prop = of_get_property(dsi->dev.of_node, "clock", NULL);
+    if (prop)
+    {
+        default_mode.clock = be32_to_cpup(prop);
+        printk(KERN_ALERT "clock set to %d\n", default_mode.clock);
+    }
+    else
+        printk(KERN_ALERT "clock not set, using default\n");
+
+    prop = of_get_property(dsi->dev.of_node, "hsync_start", NULL);
+    if (prop)
+    {
+        default_mode.hsync_start = be32_to_cpup(prop);
+        printk(KERN_ALERT "hsync_start set to %d\n", default_mode.hsync_start);
+    }
+    else
+        printk(KERN_ALERT "hsync_start not set, using default\n");
+
+    prop = of_get_property(dsi->dev.of_node, "hsync_end", NULL);
+    if (prop)
+    {
+        default_mode.hsync_end = be32_to_cpup(prop);
+        printk(KERN_ALERT "hsync_end set to %d\n", default_mode.hsync_end);
+    }
+    else
+        printk(KERN_ALERT "hsync_end not set, using default\n");
+
+    prop = of_get_property(dsi->dev.of_node, "htotal", NULL);
+    if (prop)
+    {
+        default_mode.htotal = be32_to_cpup(prop);
+        printk(KERN_ALERT "htotal set to %d\n", default_mode.htotal);
+    }
+    else
+        printk(KERN_ALERT "htotal not set, using default\n");
+
+    prop = of_get_property(dsi->dev.of_node, "vsync_start", NULL);
+    if (prop)
+    {
+        default_mode.vsync_start = be32_to_cpup(prop);
+        printk(KERN_ALERT "vsync_start set to %d\n", default_mode.vsync_start);
+    }
+    else
+        printk(KERN_ALERT "vsync_start not set, using default\n");
+
+    prop = of_get_property(dsi->dev.of_node, "vsync_end", NULL);
+    if (prop)
+    {
+        default_mode.vsync_end = be32_to_cpup(prop);
+        printk(KERN_ALERT "vsync_end set to %d\n", default_mode.vsync_end);
+    }
+    else
+        printk(KERN_ALERT "vsync_end not set, using default\n");
+
+    prop = of_get_property(dsi->dev.of_node, "vtotal", NULL);
+    if (prop)
+    {
+        default_mode.vtotal = be32_to_cpup(prop);
+        printk(KERN_ALERT "clock set to %d\n", default_mode.clock);
+    }
+    else
+        printk(KERN_ALERT "clock not set, using default\n");
+
+    // end panel
 
     ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
     if (!ctx)
@@ -880,4 +963,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.3");
+MODULE_VERSION("1.0.4");
