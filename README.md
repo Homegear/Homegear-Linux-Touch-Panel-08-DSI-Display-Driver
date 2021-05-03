@@ -292,5 +292,6 @@ If the recovery procedure does not work, now the driver exposes `/proc/hgltp08` 
 
 I added some parameters that can be set in the dts file. If not set, the defaults are used (currently the same values as set in the dts file).
 They allow setting some panel driver timings. For example, to change the refresh rate from the default 50 Hz one can change the value for `clock` to 33921 (default is 56535).
+The values should also be changeable from config.txt, but I didn't test that part yet.
 
 Worth mentioning about this is that the values do not end up in the kernel (that is, video driver) as set. There are some predefined clock values that are really available, so the clock value gets rounded up to an available value and also the other timings get adjusted accordingly to fit the actual clock value.
