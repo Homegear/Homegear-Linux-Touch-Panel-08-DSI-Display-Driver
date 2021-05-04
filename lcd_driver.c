@@ -910,10 +910,10 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
     if (prop)
     {
         default_mode.vtotal = be32_to_cpup(prop);
-        printk(KERN_ALERT "clock set to %d\n", default_mode.clock);
+        printk(KERN_ALERT "vtotal set to %d\n", default_mode.vtotal);
     }
     else
-        printk(KERN_ALERT "clock not set, using default\n");
+        printk(KERN_ALERT "vtotal not set, using default\n");
 
     // end panel
 
