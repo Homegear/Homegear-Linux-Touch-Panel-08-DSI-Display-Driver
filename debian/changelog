@@ -1,8 +1,14 @@
+hgltp08 (1.0.6) buster; urgency=medium
+
+  * Exposed params to config.txt (eg using dtparam).
+
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 4 Mar 2021 17:00:00 +0200
+
 hgltp08 (1.0.5) buster; urgency=medium
 
   * More safety checks. Removed a DSI call that might create troubles from enable function.
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 4 Mar 2021 17:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 4 Mar 2021 12:00:00 +0200
 
 hgltp08 (1.0.4) buster; urgency=medium
 

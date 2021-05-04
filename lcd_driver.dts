@@ -23,7 +23,7 @@
                 };
             };
 
-            panel_test: panel@0 {
+            panel_hgltp08: panel@0 {
                 compatible = "hgltp08";
                 reg=<0>;
                 label= "Homegear LTP08 Multitouch 8\" Display";
@@ -85,8 +85,15 @@
 		interrupt = <&goodix_pins>,"brcm,pins:0",
                     <&gt911>,"interrupts:0",
                     <&gt911>,"irq-gpios:4";
-		    reset = <&goodix_pins>,"brcm,pins:4",
+		reset = <&goodix_pins>,"brcm,pins:4",
                     <&gt911>,"reset-gpios:4";
+		clock = <&panel_hgltp08>,"clock:0";
+		hsync_start = <&panel_hgltp08>,"hsync_start:0";
+		hsync_end = <&panel_hgltp08>,"hsync_end:0";
+		htotal = <&panel_hgltp08>,"htotal:0";
+		vsync_start = <&panel_hgltp08>,"vsync_start:0";
+		vsync_end = <&panel_hgltp08>,"vsync_end:0";
+		vtotal = <&panel_hgltp08>,"vtotal:0";
 	};
 
 };
