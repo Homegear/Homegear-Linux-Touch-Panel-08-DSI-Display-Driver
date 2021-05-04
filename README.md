@@ -106,7 +106,7 @@ Screen:
 
 `xrandr --output DSI-1 --rotate left`
 
-This will rotate only the screen, but not the touch input. 
+This will rotate only the screen, but not the touch input.
 
 NOTE: This info is obsolete, it's kept here just for the alternative:
 To also rotate the touch input, use:
@@ -304,3 +304,47 @@ dtparam=clock=33921
 ```
 
 Worth mentioning about this is that the values do not end up in the kernel (that is, video driver) as set. There are some predefined clock values that are really available, so the clock value gets rounded up to an available value and also the other timings get adjusted accordingly to fit the actual clock value.
+
+#### Values for parameters
+
+The clock value can be computed with this formula:
+
+`htotal * vtotal * frame_rate / 1000`
+
+There are vertical timings in there, their names starting with 'v' and horizontal timings, with names starting with 'h'.
+
+Here is a portion of the driver code, which along with the following description, will make the settings more clear:
+
+```
+#define FRONT_PORCH 18
+#define SYNC_LEN 18
+#define BACK_PORCH 18
+
+    .hsync_start= 800 + FRONT_PORCH,
+    .hsync_end	= 800 + FRONT_PORCH + SYNC_LEN,
+    .htotal		= 800 + FRONT_PORCH + SYNC_LEN + BACK_PORCH,
+
+#define VFRONT_PORCH 30
+#define VSYNC_LEN 4
+#define VBACK_PORCH 10
+
+    .vsync_start= 1280 + VFRONT_PORCH,
+    .vsync_end	= 1280 + VFRONT_PORCH + VSYNC_LEN,
+    .vtotal		= 1280 + VFRONT_PORCH + VSYNC_LEN + VBACK_PORCH,
+```
+
+The values are basically taken from the android settings.
+
+`Vertical` and `horizontal` are very similar, jut that they are for synchronization of the frame and of the lines, respectively.
+Here is a pdf describing the values briefly:
+https://www.nxp.com/wcm_documents/techzones/microcontrollers-techzone/Presentations/graphics.lcd.technologies.pdf
+
+The sync_start values tell when the synchronization pulse starts (horizonta/vertical, depending on the prefix), the sync_end tells when it ends and the total value is self explanatory.
+So basically a line is followed by a pause (FRONT_PORCH length), followed by the synchronization pulse (SYNC_LEN length) then followed by another pause (BACK_PORCH), then the next line comes (800 pixels in this case).
+
+Very similarily, the frame has a sync pulse (VSYNC_LEN length) that has before it a front porch (VFRONT_PORCH lenght) and it's followed by a back porch (VBACK_PORCH), then the next frame content follows (1280 lines in this case).
+
+The exposed settings are `hsync_start`, `hsync_end`, `htotal` for horizontal ones and `vsync_start`, `vsync_end`, `vtotal` for the vertical ones.
+The vertical settings change does not help much (they will shift the image and/or add black bands, if changed), but changes in the horizontal settings might make sense.
+
+The first thing to try to change is the 'clock' value. Also adjusting the `hsync_start` even to 800 might make sense, because the video driver actually adjusts that value (it increases it) when adjusting the clock, to have the same refresh rate as the original one.

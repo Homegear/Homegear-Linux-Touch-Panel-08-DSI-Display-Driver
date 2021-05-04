@@ -729,10 +729,13 @@ static int hgltp08_enable(struct drm_panel *panel)
         dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
     */
 
+    if (ctx->gpioBacklightD)
+        gpio_set_value_cansleep(ctx->backlightPin, 1);
+
     cmdcnt = 0;
     do
     {
-        ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
+        ret = (ctx->dsi);
         if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
@@ -744,9 +747,6 @@ static int hgltp08_enable(struct drm_panel *panel)
 
         atomic_set(&errorFlag, 1);
     }
-
-    if (ctx->gpioBacklightD)
-        gpio_set_value_cansleep(ctx->backlightPin, 1);
 
     ctx->enabled = true;
 
