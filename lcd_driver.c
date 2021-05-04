@@ -407,7 +407,7 @@ static int switch_page(struct hgltp08_touchscreen *ctx, u8 page)
 
 static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
 {
-    int i, ret;
+    int i, ret, cmdcnt;
 
     ret = 0;
 
@@ -415,10 +415,28 @@ static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
     {
         const struct panel_command *cmd = &panel_cmds_init[i];
 
-        if (cmd->cmd.cmd == 0xFF)
-            ret = switch_page(ctx, cmd->cmd.data);
-        else
-            ret = send_cmd_data(ctx, cmd->cmd.cmd, cmd->cmd.data);
+        cmdcnt = 0;
+        do
+        {
+            if (cmd->cmd.cmd == 0xFF)
+                ret = switch_page(ctx, cmd->cmd.data);
+            else
+                ret = send_cmd_data(ctx, cmd->cmd.cmd, cmd->cmd.data);
+
+            if (ret) msleep(RETRY_DELAY);
+
+            ++cmdcnt;
+        }
+        while (ret && cmdcnt <= CMD_RETRIES);
+
+        if (ret)
+        {
+            printk(KERN_ALERT "Couldn't send initialization command!\n");
+
+            atomic_set(&errorFlag, 1);
+
+            return ret;
+        }
 
         if (cmd->delay)
             msleep(cmd->delay);
@@ -501,6 +519,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     {
         printk(KERN_ALERT "Couldn't send initialization commands!\n");
 
+        atomic_set(&errorFlag, 1);
+
         return ret;
     }
 
@@ -516,6 +536,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     if (ret)
     {
         printk(KERN_ALERT "Couldn't switch page!\n");
+
+        atomic_set(&errorFlag, 1);
 
         return ret;
     }
@@ -589,7 +611,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 {
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     struct mipi_dsi_device *dsi = ctx->dsi;
-    int ret;
+    int ret, cmdcnt;
 
     if (!ctx->prepared)
         return 0;
@@ -598,13 +620,36 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 
     proc_remove(procFile);
 
-    ret = mipi_dsi_dcs_set_display_off(dsi);
+    cmdcnt = 0;
+    do
+    {
+        ret = mipi_dsi_dcs_set_display_off(dsi);
+        if (ret) msleep(RETRY_DELAY);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
+
     if (ret)
+    {
         printk(KERN_WARNING "failed to set display off: %d\n", ret);
 
-    ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
+        atomic_set(&errorFlag, 1);
+    }
+
+    cmdcnt = 0;
+    do
+    {
+        ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
+        if (ret) msleep(RETRY_DELAY);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt <= CMD_RETRIES);
+
     if (ret)
+    {
         printk(KERN_WARNING "failed to enter sleep mode: %d\n", ret);
+        atomic_set(&errorFlag, 1);
+    }
 
     msleep(120);
 
@@ -634,6 +679,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     int ret;
     int cmdcnt;
+    //struct mipi_dsi_device *dsi = ctx->dsi;
+    //bool slow_mode;
 
     if (ctx->enabled)
         return 0;
@@ -656,6 +703,12 @@ static int hgltp08_enable(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
+    /*
+    slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
+
+    if (!slow_mode)
+        dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
     cmdcnt = 0;
     do
     {
@@ -671,6 +724,10 @@ static int hgltp08_enable(struct drm_panel *panel)
 
         atomic_set(&errorFlag, 1);
     }
+
+    if (!slow_mode)
+        dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+    */
 
     cmdcnt = 0;
     do
@@ -963,4 +1020,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.4");
+MODULE_VERSION("1.0.5");

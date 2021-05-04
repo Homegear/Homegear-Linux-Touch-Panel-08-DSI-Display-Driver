@@ -8,6 +8,7 @@ case "$1" in
 		dkms remove hgltp08/1.0.1 --all
 		dkms remove hgltp08/1.0.2 --all
 		dkms remove hgltp08/1.0.3 --all
+		dkms remove hgltp08/1.0.4 --all
 		;;
 esac
 
