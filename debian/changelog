@@ -1,3 +1,9 @@
+hgltp08 (1.0.7) buster; urgency=medium
+
+  * Sending commands to the panel in low power mode now.
+
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 5 Mar 2021 17:00:00 +0200
+
 hgltp08 (1.0.6) buster; urgency=medium
 
   * Exposed params to config.txt (eg using dtparam).

@@ -558,9 +558,6 @@ static int hgltp08_prepare(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
-    if (!slow_mode)
-        dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
-
     msleep(125);
 
     cmdcnt = 0;
@@ -597,6 +594,9 @@ static int hgltp08_prepare(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
+    if (!slow_mode)
+        dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
     msleep(20);
 
     ctx->prepared = true;
@@ -612,6 +612,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     struct mipi_dsi_device *dsi = ctx->dsi;
     int ret, cmdcnt;
+    bool slow_mode;
 
     if (!ctx->prepared)
         return 0;
@@ -619,6 +620,11 @@ static int hgltp08_unprepare(struct drm_panel *panel)
     printk(KERN_ALERT "Unprepare!\n");
 
     proc_remove(procFile);
+
+    slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
+
+    if (!slow_mode)
+        dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
     cmdcnt = 0;
     do
@@ -651,6 +657,9 @@ static int hgltp08_unprepare(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
+    if (!slow_mode)
+        dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
     msleep(120);
 
     if (ctx->gpioBacklightD)
@@ -679,8 +688,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     int ret;
     int cmdcnt;
-    //struct mipi_dsi_device *dsi = ctx->dsi;
-    //bool slow_mode;
+    struct mipi_dsi_device *dsi = ctx->dsi;
+    bool slow_mode;
 
     if (ctx->enabled)
         return 0;
@@ -703,11 +712,11 @@ static int hgltp08_enable(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
-    /*
     slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
-
     if (!slow_mode)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+    /*
 
     cmdcnt = 0;
     do
@@ -725,8 +734,6 @@ static int hgltp08_enable(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
-    if (!slow_mode)
-        dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
     */
 
     if (ctx->gpioBacklightD)
@@ -748,6 +755,10 @@ static int hgltp08_enable(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
+    //if (!slow_mode)
+    // clear the LPM mode no matter what
+    dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
     ctx->enabled = true;
 
     printk(KERN_ALERT "Enabled!\n");
@@ -760,9 +771,15 @@ static int hgltp08_disable(struct drm_panel *panel)
     int cmdcnt;
     int ret;
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
+    struct mipi_dsi_device *dsi = ctx->dsi;
+    bool slow_mode;
 
     if (!ctx->enabled)
         return 0;
+
+    slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
+    if (!slow_mode)
+        dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
     cmdcnt = 0;
     do
@@ -782,6 +799,10 @@ static int hgltp08_disable(struct drm_panel *panel)
 
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 0);
+
+    // leave it in slow mode until it wakes up
+    //if (!slow_mode)
+    //    dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
 
     ctx->enabled = false;
 
@@ -1020,4 +1041,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.6");
+MODULE_VERSION("1.0.7");
