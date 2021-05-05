@@ -735,7 +735,7 @@ static int hgltp08_enable(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        ret = (ctx->dsi);
+        ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
         if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
