@@ -4,7 +4,7 @@ case "$1" in
 	remove|purge|abort-install|abort-upgrade)
 		# This package is being removed, but its configuration has not yet
 		# been purged.
-		dkms remove hgltp08/1.0.7 --all
+		dkms remove hgltp08/1.0.8 --all
 		;;
 
 	disappear)

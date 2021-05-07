@@ -1,3 +1,9 @@
+hgltp08 (1.0.8) buster; urgency=medium
+
+  * Moved setting low power mode earlier in enable function. Should not affect anything. Increased the waiting interval in the recovery loop and increased the number or retry attempts to 5.
+
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 5 Mar 2021 13:00:00 +0200
+
 hgltp08 (1.0.7) buster; urgency=medium
 
   * Sending commands to the panel in low power mode now.

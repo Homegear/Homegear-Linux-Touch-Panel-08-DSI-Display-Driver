@@ -34,8 +34,8 @@
 #define DEFAULT_GPIO_RESET_PIN 13
 #define DEFAULT_GPIO_BACKLIGHT_PIN 28
 
-#define CMD_RETRIES 3
-#define RETRY_DELAY 50
+#define CMD_RETRIES 5
+#define RETRY_DELAY 100
 
 
 static atomic_t errorFlag = ATOMIC_INIT(0);
@@ -696,6 +696,10 @@ static int hgltp08_enable(struct drm_panel *panel)
 
     printk(KERN_ALERT "Enabling!\n");
 
+    slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
+    if (!slow_mode)
+        dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
     cmdcnt = 0;
     do
     {
@@ -711,10 +715,6 @@ static int hgltp08_enable(struct drm_panel *panel)
 
         atomic_set(&errorFlag, 1);
     }
-
-    slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
-    if (!slow_mode)
-        dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
     /*
 
@@ -1041,4 +1041,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.7");
+MODULE_VERSION("1.0.8");
