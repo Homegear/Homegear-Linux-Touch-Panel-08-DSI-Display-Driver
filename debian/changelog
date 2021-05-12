@@ -1,32 +1,41 @@
+hgltp08 (1.0.9) buster; urgency=medium
+
+  * Moved aquiring/releasing gpio pins in probe/remove
+  * Moved initializing/removing proc file in probe/remove
+  * Now reset is done in the retry loop
+  * Changed reset timings
+
+ -- Adrian Roman <a.roman@ib-company.de>  Wed, 12 May 2021 17:00:00 +0200
+
 hgltp08 (1.0.8) buster; urgency=medium
 
   * Moved setting low power mode earlier in enable function. Should not affect anything. Increased the waiting interval in the recovery loop and increased the number or retry attempts to 5.
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 5 Mar 2021 13:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 5 May 2021 13:00:00 +0200
 
 hgltp08 (1.0.7) buster; urgency=medium
 
   * Sending commands to the panel in low power mode now.
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 5 Mar 2021 17:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 5 May 2021 17:00:00 +0200
 
 hgltp08 (1.0.6) buster; urgency=medium
 
   * Exposed params to config.txt (eg using dtparam).
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 4 Mar 2021 17:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 4 May 2021 17:00:00 +0200
 
 hgltp08 (1.0.5) buster; urgency=medium
 
   * More safety checks. Removed a DSI call that might create troubles from enable function.
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 4 Mar 2021 12:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 4 May 2021 12:00:00 +0200
 
 hgltp08 (1.0.4) buster; urgency=medium
 
   * Added params reading from device tree.
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 3 Mar 2021 17:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 3 May 2021 17:00:00 +0200
 
 hgltp08 (1.0.3) buster; urgency=medium
 

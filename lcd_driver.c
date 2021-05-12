@@ -458,48 +458,9 @@ static int hgltp08_prepare(struct drm_panel *panel)
 
     printk(KERN_ALERT "Preparing!\n");
 
-
-    procFile = proc_create("hgltp08", 0444, NULL, &proc_operations);
-
-
     if (!dsi)
         printk(KERN_ALERT "No DSI device!\n");
 
-
-    ctx->gpioBacklightD = gpio_request(ctx->backlightPin, "gpioBacklightD");
-    if (ctx->gpioBacklightD < 0)
-    {
-        ctx->gpioBacklightD = 0;
-        printk(KERN_ALERT "Couldn't grab the gpio BacklightD pin\n");
-    }
-    else
-        ctx->gpioBacklightD = 1;
-
-    if (ctx->gpioBacklightD)
-        gpio_direction_output(ctx->backlightPin, 1);
-
-
-    ctx->gpioResetD = gpio_request(ctx->resetPin, "gpioResetD");
-    if (ctx->gpioResetD < 0)
-    {
-        ctx->gpioResetD = 0;
-        printk(KERN_ALERT "Couldn't grab the gpio ResetD pin\n");
-    }
-    else
-        ctx->gpioResetD = 1;
-
-    if (ctx->gpioResetD)
-        gpio_direction_output(ctx->resetPin, 1);
-
-    msleep(125);
-
-    if (ctx->gpioResetD)
-        gpio_set_value_cansleep(ctx->resetPin, 0);
-    msleep(20);
-    if (ctx->gpioResetD)
-        gpio_set_value_cansleep(ctx->resetPin, 1);
-
-    msleep(125);
 
     slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
 
@@ -509,6 +470,18 @@ static int hgltp08_prepare(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
+        msleep(125);
+
+	if (ctx->gpioResetD)
+    	    gpio_set_value_cansleep(ctx->resetPin, 0);
+        //msleep(20);
+	msleep(150);
+        if (ctx->gpioResetD)
+	    gpio_set_value_cansleep(ctx->resetPin, 1);
+
+        //msleep(125);
+	msleep(250);
+
         ret = hgltp08_init_sequence(ctx);
         if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
@@ -619,8 +592,6 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 
     printk(KERN_ALERT "Unprepare!\n");
 
-    proc_remove(procFile);
-
     slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
 
     if (!slow_mode)
@@ -664,18 +635,6 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 0);
-
-    if (ctx->gpioResetD)
-    {
-        gpio_free(ctx->resetPin);
-        ctx->gpioResetD = 0;
-    }
-
-    if (ctx->gpioBacklightD)
-    {
-        gpio_free(ctx->backlightPin);
-        ctx->gpioBacklightD = 0;
-    }
 
     ctx->prepared = false;
 
@@ -871,6 +830,8 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
 
     printk(KERN_ALERT "Probing!\n");
 
+    procFile = proc_create("hgltp08", 0444, NULL, &proc_operations);
+
     // read overwrites of panel parameters from device tree
 
     prop = of_get_property(dsi->dev.of_node, "clock", NULL);
@@ -998,6 +959,30 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
         return ret;
     }
 
+    ctx->gpioBacklightD = gpio_request(ctx->backlightPin, "gpioBacklightD");
+    if (ctx->gpioBacklightD < 0)
+    {
+        ctx->gpioBacklightD = 0;
+        printk(KERN_ALERT "Couldn't grab the gpio BacklightD pin\n");
+    }
+    else
+        ctx->gpioBacklightD = 1;
+
+    if (ctx->gpioBacklightD)
+        gpio_direction_output(ctx->backlightPin, 1);
+
+    ctx->gpioResetD = gpio_request(ctx->resetPin, "gpioResetD");
+    if (ctx->gpioResetD < 0)
+    {
+        ctx->gpioResetD = 0;
+        printk(KERN_ALERT "Couldn't grab the gpio ResetD pin\n");
+    }
+    else
+        ctx->gpioResetD = 1;
+
+    if (ctx->gpioResetD)
+        gpio_direction_output(ctx->resetPin, 1);
+
     printk(KERN_ALERT "Probed!\n");
 
     return 0;
@@ -1010,7 +995,21 @@ static int hgltp08_remove(struct mipi_dsi_device *dsi)
     mipi_dsi_detach(dsi);
     drm_panel_remove(&ctx->base);
 
+    if (ctx->gpioResetD)
+    {
+        gpio_free(ctx->resetPin);
+        ctx->gpioResetD = 0;
+    }
+
+    if (ctx->gpioBacklightD)
+    {
+        gpio_free(ctx->backlightPin);
+        ctx->gpioBacklightD = 0;
+    }
+
     kfree(ctx);
+
+    proc_remove(procFile);
 
     printk(KERN_ALERT "Removed!\n");
 
@@ -1041,4 +1040,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.8");
+MODULE_VERSION("1.0.9");

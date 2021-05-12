@@ -57,13 +57,13 @@ Just run the two sh scripts in the panel directory (after having the kernel comp
 
 ### Installing the driver
 
-Note: This info is obsolete, except the overlay file copying and the config.txt, now the dkms solution will be used, but I leave it here just in case.
+Note: This info is obsolete, except for the config.txt, now the dkms solution will be used, but I leave it here just in case.
 
 Remove the contents of overlay directory on cm3 device from /boot.
 Copy the overlay files from chroot/boot/dtbs/4.19.95-v7+/overlays in /boot/overlays.
 Copy the chroot/boot/dtbs/4.19.95-v7+/*.dtb on the device in /boot
 
-Copy the panel overlay (currently htltp08_lcd_driver.dtbo) from panel directory in /boot/overlays.
+Copy the panel overlay (currently hgltp08_lcd_driver.dtbo) from panel directory in /boot/overlays.
 This and copying config.txt is actually the only thing you have to do if the 'official' kernel is used with dkms.
 
 Copy System.map-4.19... config-4.19... vmlinuz-4.19... and kernel7.img from chroot/boot on the device in /boot.
@@ -131,21 +131,21 @@ will rotate the console, but it does not affect the X server, so it doesn't help
 
 I managed to make dkms working:
 
-- make a /usr/src/htltp08-1.0 directory
+- make a /usr/src/hgltp08-1.0 directory
 - copy there the Makefile, dkms.conf and lcd_driver.c files
 
-- add the module to dkms with: `dkms add -m htltp08 -v 1.0`
-- build it with: `dkms build -m htltp08 -v 1.0`
-- install it with: `dkms install -m htltp08 -v 1.0`
+- add the module to dkms with: `dkms add -m hgltp08 -v 1.0`
+- build it with: `dkms build -m hgltp08 -v 1.0`
+- install it with: `dkms install -m hgltp08 -v 1.0`
 
 Apparently only 'install' might be needed.
 
 After this, simply rebooting should make the driver work. It also needs the lines in config.txt and the dtbo file mentioned above to be installed.
 
 The module can be uninstalled with:
-`dkms uninstall -m htltp08 -v 1.0`
+`dkms uninstall -m hgltp08 -v 1.0`
 and removed with (no need to uninstall it first):
-`dkms remove htltp08/1.0 --all`
+`dkms remove hgltp08/1.0 --all`
 
 
 Note: a kernel version can be specified for dkms with -k if building/installing for some other kernel version.
