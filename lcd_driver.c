@@ -397,7 +397,7 @@ static int switch_page(struct hgltp08_touchscreen *ctx, u8 page)
     ret = mipi_dsi_dcs_write_buffer(ctx->dsi, buf, sizeof(buf));
     if (ret < 0)
     {
-        printk(KERN_ALERT "MIPI DSI DCS write failed for switching page: %d\n", ret);
+        printk(KERN_ALERT "MIPI DSI DCS write failed for switching to page: %d, return code: %d\n", (int)page, ret);
 
         return ret;
     }
@@ -445,6 +445,19 @@ static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
     return 0;
 }
 
+static void reset_panel(struct hgltp08_touchscreen *ctx)
+{
+    msleep(25);
+
+    if (ctx->gpioResetD)
+        gpio_set_value_cansleep(ctx->resetPin, 0);
+    msleep(20);
+    if (ctx->gpioResetD)
+        gpio_set_value_cansleep(ctx->resetPin, 1);
+
+    msleep(25);
+}
+
 static int hgltp08_prepare(struct drm_panel *panel)
 {
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
@@ -470,17 +483,7 @@ static int hgltp08_prepare(struct drm_panel *panel)
     cmdcnt = 0;
     do
     {
-        msleep(125);
-
-	if (ctx->gpioResetD)
-    	    gpio_set_value_cansleep(ctx->resetPin, 0);
-        //msleep(20);
-	msleep(150);
-        if (ctx->gpioResetD)
-	    gpio_set_value_cansleep(ctx->resetPin, 1);
-
-        //msleep(125);
-	msleep(250);
+        reset_panel(ctx);
 
         ret = hgltp08_init_sequence(ctx);
         if (ret) msleep(RETRY_DELAY);
@@ -494,8 +497,14 @@ static int hgltp08_prepare(struct drm_panel *panel)
 
         atomic_set(&errorFlag, 1);
 
+        if (!slow_mode)
+            dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
         return ret;
     }
+
+/*
+    // the initialization ends on page 0
 
     cmdcnt = 0;
     do
@@ -512,8 +521,12 @@ static int hgltp08_prepare(struct drm_panel *panel)
 
         atomic_set(&errorFlag, 1);
 
+        if (!slow_mode)
+            dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
         return ret;
     }
+*/
 
     cmdcnt = 0;
     do
@@ -547,8 +560,15 @@ static int hgltp08_prepare(struct drm_panel *panel)
         printk(KERN_ALERT "Couldn't exit sleep mode!\n");
 
         atomic_set(&errorFlag, 1);
+
+        if (!slow_mode)
+            dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
+        return ret;
     }
 
+    /*
+    // no need of this, enable will do this
     msleep(125);
 
     cmdcnt = 0;
@@ -566,6 +586,7 @@ static int hgltp08_prepare(struct drm_panel *panel)
 
         atomic_set(&errorFlag, 1);
     }
+    */
 
     if (!slow_mode)
         dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
@@ -597,6 +618,8 @@ static int hgltp08_unprepare(struct drm_panel *panel)
     if (!slow_mode)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
+/*
+    // this is not needed here, it's done in disable
     cmdcnt = 0;
     do
     {
@@ -612,6 +635,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 
         atomic_set(&errorFlag, 1);
     }
+*/
 
     cmdcnt = 0;
     do
@@ -638,7 +662,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 
     ctx->prepared = false;
 
-    return 0;
+    return ret;
 }
 
 
@@ -673,6 +697,10 @@ static int hgltp08_enable(struct drm_panel *panel)
         printk(KERN_ALERT "Couldn't prepare the panel!\n");
 
         atomic_set(&errorFlag, 1);
+
+        dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
+        return ret;
     }
 
     /*
@@ -694,6 +722,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     }
 
     */
+
+    msleep(125);
 
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 1);
@@ -722,7 +752,7 @@ static int hgltp08_enable(struct drm_panel *panel)
 
     printk(KERN_ALERT "Enabled!\n");
 
-    return 0;
+    return ret;
 }
 
 static int hgltp08_disable(struct drm_panel *panel)
@@ -759,15 +789,14 @@ static int hgltp08_disable(struct drm_panel *panel)
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 0);
 
-    // leave it in slow mode until it wakes up
-    //if (!slow_mode)
-    //    dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+    if (!slow_mode)
+        dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
 
     ctx->enabled = false;
 
     printk(KERN_ALERT "Disabled!\n");
 
-    return 0;
+    return ret;
 }
 
 static int hgltp08_get_modes(struct drm_panel *panel
@@ -1040,4 +1069,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.9");
+MODULE_VERSION("1.0.10");
