@@ -1,3 +1,11 @@
+hgltp08 (1.0.11) buster; urgency=medium
+
+  * Removed some commented code
+  * Added some delays, changed some others
+  * Added a flag to be able to enable/disable LPM mode for commands
+
+ -- Adrian Roman <a.roman@ib-company.de>  Wed, 14 May 2021 17:00:00 +0200
+
 hgltp08 (1.0.10) buster; urgency=medium
 
   * Removed some code that is useless
