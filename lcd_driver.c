@@ -31,13 +31,16 @@
 #define HAVE_PROC_OPS
 #endif
 
-#define SLOW_MODE 1
+//#define SLOW_MODE 1
 
 #define DEFAULT_GPIO_RESET_PIN 13
 #define DEFAULT_GPIO_BACKLIGHT_PIN 28
 
-#define CMD_RETRIES 3 // usually if it doesn't recover after the first failure, it won't recover at all
+#define CMD_RETRIES 5 // usually if it doesn't recover after the first or second failure, it won't recover at all
 #define RETRY_DELAY 80
+
+#define NO_ENTER_OFF 1
+#define NO_ENTER_SLEEP 1
 
 static atomic_t errorFlag = ATOMIC_INIT(0);
 struct proc_dir_entry *procFile;
@@ -56,6 +59,7 @@ struct hgltp08_touchscreen
 
     bool prepared;
     bool enabled;
+    bool isOn;
 };
 
 
@@ -510,6 +514,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
         return ret;
     }
 
+    ctx->isOn = false;
+
     cmdcnt = 0;
     do
     {
@@ -588,6 +594,10 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 
     msleep(20); // sometimes the following call gets a 'transfer interrupt wait timeout', maybe this delay makes some difference?
 
+#ifndef NO_ENTER_SLEEP
+
+// disable all unnecessary blocks inside the display module except interface communication
+
     cmdcnt = 0;
     do
     {
@@ -602,6 +612,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
         printk(KERN_WARNING "failed to enter sleep mode: %d\n", ret);
         atomic_set(&errorFlag, 1);
     }
+#endif // NO_ENTER_SLEEP
 
 #ifdef SLOW_MODE
     if (!slow_mode)
@@ -665,25 +676,26 @@ static int hgltp08_enable(struct drm_panel *panel)
         return ret;
     }
 
-    msleep(125);
-
-    if (ctx->gpioBacklightD)
-        gpio_set_value_cansleep(ctx->backlightPin, 1);
-
-    cmdcnt = 0;
-    do
+    if (!ctx->isOn)
     {
-        ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
-        if (ret) msleep(RETRY_DELAY);
-        ++cmdcnt;
-    }
-    while (ret && cmdcnt < CMD_RETRIES);
+        msleep(125);
 
-    if (ret)
-    {
-        printk(KERN_ALERT "Couldn't set display on!\n");
+        cmdcnt = 0;
+        do
+        {
+            ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
+            if (ret) msleep(RETRY_DELAY);
+            ++cmdcnt;
+        }
+        while (ret && cmdcnt < CMD_RETRIES);
 
-        atomic_set(&errorFlag, 1);
+        if (ret)
+        {
+            printk(KERN_ALERT "Couldn't set display on!\n");
+
+            atomic_set(&errorFlag, 1);
+        }
+        else ctx->isOn = true;
     }
 
 #ifdef SLOW_MODE
@@ -691,6 +703,9 @@ static int hgltp08_enable(struct drm_panel *panel)
     // clear the LPM mode no matter what
     dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
 #endif // SLOW_MODE
+
+    if (ctx->gpioBacklightD)
+        gpio_set_value_cansleep(ctx->backlightPin, 1);
 
     ctx->enabled = true;
 
@@ -717,6 +732,10 @@ static int hgltp08_disable(struct drm_panel *panel)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 #endif
 
+
+#ifndef NO_ENTER_OFF
+//  stop displaying the image data on the display device
+
     cmdcnt = 0;
     do
     {
@@ -732,6 +751,8 @@ static int hgltp08_disable(struct drm_panel *panel)
 
         atomic_set(&errorFlag, 1);
     }
+    else ctx->isOn = false;
+#endif
 
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 0);
@@ -911,7 +932,7 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
     dsi->lanes = 4;
     dsi->format = MIPI_DSI_FMT_RGB888;
 
-    dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE /*| MIPI_DSI_MODE_LPM*/;
+    dsi->mode_flags = MIPI_DSI_MODE_VIDEO /*| MIPI_DSI_MODE_VIDEO_SYNC_PULSE*/ | MIPI_DSI_MODE_LPM;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
@@ -1018,4 +1039,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.11");
+MODULE_VERSION("1.0.12");
