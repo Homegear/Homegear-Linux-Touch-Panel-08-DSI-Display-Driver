@@ -1,3 +1,15 @@
+hgltp08 (1.0.14) buster; urgency=medium
+
+  * Made it more stable, but it needs VC4 driver changes as well
+
+ -- Adrian Roman <a.roman@ib-company.de>  Wed, 20 May 2021 17:00:00 +0200
+
+hgltp08 (1.0.13) buster; urgency=medium
+
+  * Some reverted things
+
+ -- Adrian Roman <a.roman@ib-company.de>  Wed, 18 May 2021 17:00:00 +0200
+
 hgltp08 (1.0.12) buster; urgency=medium
 
   * Trying some workarounds, including avoiding DSI off and sleep calls 

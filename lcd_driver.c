@@ -31,7 +31,7 @@
 #define HAVE_PROC_OPS
 #endif
 
-//#define SLOW_MODE 1
+#define SLOW_MODE 1
 
 #define DEFAULT_GPIO_RESET_PIN 13
 #define DEFAULT_GPIO_BACKLIGHT_PIN 28
@@ -39,7 +39,7 @@
 #define CMD_RETRIES 5 // usually if it doesn't recover after the first or second failure, it won't recover at all
 #define RETRY_DELAY 80
 
-#define NO_ENTER_OFF 1
+//#define NO_ENTER_OFF 1
 #define NO_ENTER_SLEEP 1
 
 static atomic_t errorFlag = ATOMIC_INIT(0);
@@ -336,7 +336,6 @@ static const struct panel_command panel_cmds_init[] =
 
     SWITCH_PAGE_CMD(0x00),
 
-    COMMAND_CMD(0x55, 0x00),
     COMMAND_CMD(0x35, 0x00),
     CMD_DELAY(0x11, 0x00, 100),
     CMD_DELAY(0x29, 0x00, 100),
@@ -361,6 +360,8 @@ static ssize_t procfile_read(struct file *file, char __user *ubuf, size_t count,
     return -EFAULT;
 
   *ppos = 1;
+
+  atomic_set(&errorFlag, 0);
 
   return 1;
 }
@@ -452,15 +453,15 @@ static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
 
 static void reset_panel(struct hgltp08_touchscreen *ctx)
 {
-    msleep(25);
+    msleep(120);
 
     if (ctx->gpioResetD)
         gpio_set_value_cansleep(ctx->resetPin, 0);
-    msleep(20);
+    msleep(25);
     if (ctx->gpioResetD)
         gpio_set_value_cansleep(ctx->resetPin, 1);
 
-    msleep(25);
+    msleep(120);
 }
 
 static int hgltp08_prepare(struct drm_panel *panel)
@@ -592,7 +593,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 #endif
 
-    msleep(20); // sometimes the following call gets a 'transfer interrupt wait timeout', maybe this delay makes some difference?
+    //msleep(20); // sometimes the following call gets a 'transfer interrupt wait timeout', maybe this delay makes some difference?
 
 #ifndef NO_ENTER_SLEEP
 
@@ -624,8 +625,8 @@ static int hgltp08_unprepare(struct drm_panel *panel)
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 1);
 
-    if (ctx->gpioResetD)
-        gpio_set_value_cansleep(ctx->resetPin, 0);
+//    if (ctx->gpioResetD)
+//        gpio_set_value_cansleep(ctx->resetPin, 0);
 
     ctx->prepared = false;
 
@@ -932,7 +933,7 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
     dsi->lanes = 4;
     dsi->format = MIPI_DSI_FMT_RGB888;
 
-    dsi->mode_flags = MIPI_DSI_MODE_VIDEO /*| MIPI_DSI_MODE_VIDEO_SYNC_PULSE*/ | MIPI_DSI_MODE_LPM;
+    dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE /* | MIPI_DSI_MODE_LPM*/;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
@@ -1039,4 +1040,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.12");
+MODULE_VERSION("1.0.14");
