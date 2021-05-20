@@ -4,6 +4,7 @@ case "$1" in
 	install|upgrade|abort-upgrade)
 		# Remove all old versions
 		rm -f /boot/overlays/hgltp08.dtbo > /dev/null 2>&1
+		rm -Rf /var/lib/dkms/hgltp08/*
 		dkms remove hgltp08/1.0 --all
 		dkms remove hgltp08/1.0.1 --all
 		dkms remove hgltp08/1.0.2 --all
@@ -19,21 +20,6 @@ case "$1" in
 		dkms remove hgltp08/1.0.12 --all
 		dkms remove hgltp08/1.0.13 --all
 		dkms remove hgltp08/1.0.14 --all
-		rm -Rf /var/lib/dkms/hgltp08/1.0
-		rm -Rf /var/lib/dkms/hgltp08/1.0.1
-		rm -Rf /var/lib/dkms/hgltp08/1.0.2
-		rm -Rf /var/lib/dkms/hgltp08/1.0.3
-		rm -Rf /var/lib/dkms/hgltp08/1.0.4
-		rm -Rf /var/lib/dkms/hgltp08/1.0.5
-		rm -Rf /var/lib/dkms/hgltp08/1.0.6
-		rm -Rf /var/lib/dkms/hgltp08/1.0.7
-		rm -Rf /var/lib/dkms/hgltp08/1.0.8
-		rm -Rf /var/lib/dkms/hgltp08/1.0.9
-		rm -Rf /var/lib/dkms/hgltp08/1.0.10
-		rm -Rf /var/lib/dkms/hgltp08/1.0.11
-		rm -Rf /var/lib/dkms/hgltp08/1.0.12
-		rm -Rf /var/lib/dkms/hgltp08/1.0.13
-		rm -Rf /var/lib/dkms/hgltp08/1.0.14
 		;;
 esac
 
