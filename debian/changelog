@@ -1,8 +1,14 @@
+hgltp08 (1.0.14) buster; urgency=medium
+
+  * Remove some workaround of 1.0.12 again, reset /proc/hgltp08 on read
+
+ -- Adrian Roman <a.roman@ib-company.de>  Thu, 20 May 2021 18:21:00 +0200
+
 hgltp08 (1.0.12) buster; urgency=medium
 
   * Trying some workarounds, including avoiding DSI off and sleep calls 
 
- -- Adrian Roman <a.roman@ib-company.de>  Wed, 17 May 2021 17:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 17 May 2021 17:00:00 +0200
 
 hgltp08 (1.0.11) buster; urgency=medium
 
@@ -10,14 +16,14 @@ hgltp08 (1.0.11) buster; urgency=medium
   * Added some delays, changed some others
   * Added a flag to be able to enable/disable LPM mode for commands
 
- -- Adrian Roman <a.roman@ib-company.de>  Wed, 14 May 2021 17:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Fri, 14 May 2021 17:00:00 +0200
 
 hgltp08 (1.0.10) buster; urgency=medium
 
   * Removed some code that is useless
   * Added some delays, changed some others
 
- -- Adrian Roman <a.roman@ib-company.de>  Wed, 13 May 2021 17:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Thu, 13 May 2021 17:00:00 +0200
 
 hgltp08 (1.0.9) buster; urgency=medium
 
