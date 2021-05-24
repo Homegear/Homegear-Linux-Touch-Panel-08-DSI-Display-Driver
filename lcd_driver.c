@@ -36,6 +36,7 @@
 #define DEFAULT_GPIO_RESET_PIN 13
 #define DEFAULT_GPIO_BACKLIGHT_PIN 28
 
+#define INIT_CMDS_RETRIES 3 // reset usually fails each time, if it fails
 #define CMD_RETRIES 5 // usually if it doesn't recover after the first or second failure, it won't recover at all
 #define RETRY_DELAY 80
 
@@ -413,7 +414,11 @@ static int switch_page(struct hgltp08_touchscreen *ctx, u8 page)
 
 static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
 {
-    int i, ret, cmdcnt;
+    int i, ret
+#ifdef RETRY_INIT_CMD
+    ,cmdcnt
+#endif
+    ;
 
     ret = 0;
 
@@ -421,19 +426,23 @@ static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
     {
         const struct panel_command *cmd = &panel_cmds_init[i];
 
+#ifdef RETRY_INIT_CMD
         cmdcnt = 0;
         do
         {
+#endif
+
             if (cmd->cmd.cmd == 0xFF)
                 ret = switch_page(ctx, cmd->cmd.data);
             else
                 ret = send_cmd_data(ctx, cmd->cmd.cmd, cmd->cmd.data);
 
+#ifdef RETRY_INIT_CMD
             if (ret) msleep(RETRY_DELAY);
-
             ++cmdcnt;
         }
         while (ret && cmdcnt < CMD_RETRIES);
+#endif
 
         if (ret)
         {
@@ -488,6 +497,9 @@ static int hgltp08_prepare(struct drm_panel *panel)
     slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
     if (!slow_mode)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+#else
+    // init always sent in slow mode
+    dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 #endif // SLOW_MODE
 
     cmdcnt = 0;
@@ -499,7 +511,11 @@ static int hgltp08_prepare(struct drm_panel *panel)
         if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
-    while (ret && cmdcnt < CMD_RETRIES);
+    while (ret && cmdcnt < INIT_CMDS_RETRIES);
+
+#ifndef SLOW_MODE
+    dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+#endif // SLOW_MODE
 
     if (ret)
     {
@@ -640,6 +656,7 @@ static int hgltp08_enable(struct drm_panel *panel)
     int ret;
     int cmdcnt;
     struct mipi_dsi_device *dsi = ctx->dsi;
+
 #ifdef SLOW_MODE
     bool slow_mode;
 #endif
@@ -721,6 +738,7 @@ static int hgltp08_disable(struct drm_panel *panel)
     int ret;
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     struct mipi_dsi_device *dsi = ctx->dsi;
+
 #ifdef SLOW_MODE
     bool slow_mode;
 #endif
@@ -991,6 +1009,8 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
 static int hgltp08_remove(struct mipi_dsi_device *dsi)
 {
     struct hgltp08_touchscreen *ctx = mipi_dsi_get_drvdata(dsi);
+    struct device *dev = &dsi->dev;
+
 
     mipi_dsi_detach(dsi);
     drm_panel_remove(&ctx->base);
@@ -1040,4 +1060,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.14");
+MODULE_VERSION("1.0.15");

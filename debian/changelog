@@ -1,3 +1,9 @@
+hgltp08 (1.0.15) buster; urgency=medium
+
+  * Removed the retry in init sequence, one retry loop is enough, reduced the retries for reboot to 3
+
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 24 May 2021 17:00:00 +0200
+
 hgltp08 (1.0.14) buster; urgency=medium
 
   * Made it more stable, but it needs VC4 driver changes as well
