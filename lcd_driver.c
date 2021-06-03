@@ -503,7 +503,7 @@ static int hgltp08_prepare(struct drm_panel *panel)
     dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 #endif // SLOW_MODE
 
-    atomic_set(&errorFlag, 0); // reset might bring it to like so clear the error flag
+    atomic_set(&errorFlag, 0); // reset might bring it to life so clear the error flag
 
     cmdcnt = 0;
     do
