@@ -38,7 +38,7 @@
 
 #define INIT_CMDS_RETRIES 3 // reset usually fails each time, if it fails
 #define CMD_RETRIES 5 // usually if it doesn't recover after the first or second failure, it won't recover at all
-#define RETRY_DELAY 80
+#define RETRY_DELAY 100
 
 //#define NO_ENTER_OFF 1
 #define NO_ENTER_SLEEP 1
@@ -135,7 +135,6 @@ struct panel_command
 	}
 
 #define COMMAND_CMD(_cmd, _data) CMD_DELAY(_cmd, _data, 0)
-
 
 static const struct panel_command panel_cmds_init[] =
 {
@@ -462,11 +461,11 @@ static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
 
 static void reset_panel(struct hgltp08_touchscreen *ctx)
 {
-    msleep(120);
+    msleep(20);
 
     if (ctx->gpioResetD)
         gpio_set_value_cansleep(ctx->resetPin, 0);
-    msleep(25);
+    msleep(20);
     if (ctx->gpioResetD)
         gpio_set_value_cansleep(ctx->resetPin, 1);
 
@@ -497,6 +496,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
     if (!slow_mode)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+    dsi->mode_flags &= ~(MIPI_DSI_MODE_VIDEO);
 #else
     // init always sent in slow mode
     dsi->mode_flags |= MIPI_DSI_MODE_LPM;
@@ -526,13 +527,20 @@ static int hgltp08_prepare(struct drm_panel *panel)
 #ifdef SLOW_MODE
         if (!slow_mode)
             dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
+        dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
 #endif
 
         return ret;
     }
 
-    ctx->isOn = false;
+    ctx->isOn = true;
 
+    //COMMAND_CMD(0x35, 0x00) is TE on
+
+    // also the init sequence above already does panel on and exit sleep mode, so no need to do it here again
+
+    /*
     cmdcnt = 0;
     do
     {
@@ -549,7 +557,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
-    msleep(125);
+    msleep(100);
+
 
     cmdcnt = 0;
     do
@@ -560,6 +569,8 @@ static int hgltp08_prepare(struct drm_panel *panel)
     }
     while (ret && cmdcnt < CMD_RETRIES);
 
+
+
     if (ret)
     {
         printk(KERN_ALERT "Couldn't exit sleep mode!\n");
@@ -569,17 +580,22 @@ static int hgltp08_prepare(struct drm_panel *panel)
 #ifdef SLOW_MODE
         if (!slow_mode)
             dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
+        dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
 #endif
 
         return ret;
     }
 
+    msleep(100);
+    */
+
 #ifdef SLOW_MODE
     if (!slow_mode)
         dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
-#endif
 
-    msleep(20);
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
+#endif
 
     ctx->prepared = true;
 
@@ -601,12 +617,14 @@ static int hgltp08_unprepare(struct drm_panel *panel)
     if (!ctx->prepared)
         return 0;
 
-    printk(KERN_ALERT "Unprepare!\n");
+    printk(KERN_ALERT "Unpreparing!\n");
 
 #ifdef SLOW_MODE
     slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
     if (!slow_mode)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+    dsi->mode_flags &= ~(MIPI_DSI_MODE_VIDEO);
 #endif
 
     //msleep(20); // sometimes the following call gets a 'transfer interrupt wait timeout', maybe this delay makes some difference?
@@ -629,14 +647,16 @@ static int hgltp08_unprepare(struct drm_panel *panel)
         printk(KERN_WARNING "failed to enter sleep mode: %d\n", ret);
         atomic_set(&errorFlag, 1);
     }
+
+    msleep(100);
 #endif // NO_ENTER_SLEEP
 
 #ifdef SLOW_MODE
     if (!slow_mode)
         dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
-#endif
 
-    msleep(120);
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
+#endif
 
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 1);
@@ -645,6 +665,8 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 //        gpio_set_value_cansleep(ctx->resetPin, 0);
 
     ctx->prepared = false;
+
+    printk(KERN_ALERT "Unprepared!\n");
 
     return ret;
 }
@@ -670,6 +692,8 @@ static int hgltp08_enable(struct drm_panel *panel)
     slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
     if (!slow_mode)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+    dsi->mode_flags &= ~(MIPI_DSI_MODE_VIDEO);
 #endif // SLOW_MODE
 
     cmdcnt = 0;
@@ -689,6 +713,7 @@ static int hgltp08_enable(struct drm_panel *panel)
 
 #ifdef SLOW_MODE
         dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+        dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
 #endif // SLOW_MODE
 
         return ret;
@@ -696,7 +721,7 @@ static int hgltp08_enable(struct drm_panel *panel)
 
     if (!ctx->isOn)
     {
-        msleep(125);
+        //msleep(100);
 
         cmdcnt = 0;
         do
@@ -714,12 +739,16 @@ static int hgltp08_enable(struct drm_panel *panel)
             atomic_set(&errorFlag, 1);
         }
         else ctx->isOn = true;
+
+        msleep(100);
     }
 
 #ifdef SLOW_MODE
     //if (!slow_mode)
     // clear the LPM mode no matter what
     dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
+
 #endif // SLOW_MODE
 
     if (ctx->gpioBacklightD)
@@ -745,10 +774,14 @@ static int hgltp08_disable(struct drm_panel *panel)
     if (!ctx->enabled)
         return 0;
 
+    printk(KERN_ALERT "Disabling!\n");
+
 #ifdef SLOW_MODE
     slow_mode = dsi->mode_flags & MIPI_DSI_MODE_LPM;
     if (!slow_mode)
         dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+    dsi->mode_flags &= ~(MIPI_DSI_MODE_VIDEO);
 #endif
 
 
@@ -770,7 +803,10 @@ static int hgltp08_disable(struct drm_panel *panel)
 
         atomic_set(&errorFlag, 1);
     }
-    else ctx->isOn = false;
+
+    ctx->isOn = false;
+
+    msleep(100);
 #endif
 
     if (ctx->gpioBacklightD)
@@ -779,6 +815,8 @@ static int hgltp08_disable(struct drm_panel *panel)
 #ifdef SLOW_MODE
     if (!slow_mode)
         dsi->mode_flags &= ~(MIPI_DSI_MODE_LPM);
+
+    dsi->mode_flags |= MIPI_DSI_MODE_VIDEO;
 #endif
 
     ctx->enabled = false;
@@ -1001,6 +1039,8 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
     if (ctx->gpioResetD)
         gpio_direction_output(ctx->resetPin, 1);
 
+    //dev_pm_qos_expose_flags(dev, PM_QOS_FLAG_NO_POWER_OFF);
+
     printk(KERN_ALERT "Probed!\n");
 
     return 0;
@@ -1010,7 +1050,6 @@ static int hgltp08_remove(struct mipi_dsi_device *dsi)
 {
     struct hgltp08_touchscreen *ctx = mipi_dsi_get_drvdata(dsi);
     struct device *dev = &dsi->dev;
-
 
     mipi_dsi_detach(dsi);
     drm_panel_remove(&ctx->base);
@@ -1060,4 +1099,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.15");
+MODULE_VERSION("1.0.16");

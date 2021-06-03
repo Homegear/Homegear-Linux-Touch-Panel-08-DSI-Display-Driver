@@ -1,3 +1,9 @@
+hgltp08 (1.0.16) buster; urgency=medium
+
+  * Various changes trying to fix the issue
+
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 03 Jun 2021 13:00:00 +0200
+
 hgltp08 (1.0.15) buster; urgency=medium
 
   * Removed the retry in init sequence, one retry loop is enough, reduced the retries for reboot to 3
