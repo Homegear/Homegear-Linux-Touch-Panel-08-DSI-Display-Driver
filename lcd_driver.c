@@ -136,6 +136,28 @@ struct panel_command
 
 #define COMMAND_CMD(_cmd, _data) CMD_DELAY(_cmd, _data, 0)
 
+
+
+/*
+
+
+
+
+SET_GENERIC(4);W_D(0xFF);W_D(0x98);W_D(0x81);W_D(0x00);
+SET_GENERIC(2);W_D(0x35);W_D(0x00);
+
+SET_GENERIC(2);W_D(0x11);W_D(0x00);
+delay_ms(100);
+
+SET_GENERIC(2);W_D(0x29);W_D(0x00);
+delay_ms(100);
+*/
+
+
+
+
+
+
 static const struct panel_command panel_cmds_init[] =
 {
     SWITCH_PAGE_CMD(0x03),
@@ -169,6 +191,7 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x1B, 0x0),
     COMMAND_CMD(0x1C, 0x0),
     COMMAND_CMD(0x1D, 0x0),
+
     COMMAND_CMD(0x1E, 0xC0),
     COMMAND_CMD(0x1F, 0x80),
     COMMAND_CMD(0x20, 0x02),
@@ -195,6 +218,7 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x35, 0x00),
     COMMAND_CMD(0x36, 0x00),
     COMMAND_CMD(0x37, 0x00),
+
     COMMAND_CMD(0x38, 0x3C),
     COMMAND_CMD(0x39, 0x00),
     COMMAND_CMD(0x3A, 0x00),
@@ -225,6 +249,7 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x5E, 0x01),
     COMMAND_CMD(0x5F, 0x08),
     COMMAND_CMD(0x60, 0x02),
+
     COMMAND_CMD(0x61, 0x02),
     COMMAND_CMD(0x62, 0x0A),
     COMMAND_CMD(0x63, 0x15),
@@ -256,6 +281,7 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x7D, 0x11),
     COMMAND_CMD(0x7E, 0x02),
     COMMAND_CMD(0x7F, 0x0C),
+
     COMMAND_CMD(0x80, 0x0D),
     COMMAND_CMD(0x81, 0x02),
     COMMAND_CMD(0x82, 0x0E),
@@ -271,28 +297,35 @@ static const struct panel_command panel_cmds_init[] =
     SWITCH_PAGE_CMD(0x04),
 
     COMMAND_CMD(0x6C, 0x15),
-    COMMAND_CMD(0x6E, 0x30),
-    COMMAND_CMD(0x6F, 0x33),
-    COMMAND_CMD(0x8D, 0x87),
-    COMMAND_CMD(0x87, 0xBA),
-    COMMAND_CMD(0x26, 0x76),
-    COMMAND_CMD(0xB2, 0xD1),
+    COMMAND_CMD(0x6E, 0x30), // VGH clamp 16.06       LCD SPEC  16
+    //COMMAND_CMD(0x6F, 0x33),  // old value
+    COMMAND_CMD(0x6F, 0x37), // 33  VGH pumping ratio 3x, VGL=-3x   ¸Ä³É37=VGH pumping ratio 3x, VGL=-3x
+    //COMMAND_CMD(0x8D, 0x87), // old value
+    COMMAND_CMD(0x8D, 0x1F), // VGL clamp -12.03      LCD SPEC -12
+    COMMAND_CMD(0x87, 0xBA), // LVD Function 1
+    COMMAND_CMD(0x26, 0x76), // SDTiming Control
+    COMMAND_CMD(0xB2, 0xD1), // Reload Gamma Setting
     COMMAND_CMD(0x35, 0x1F),
     COMMAND_CMD(0x33, 0x14),
+
     COMMAND_CMD(0x3A, 0xA9),
+    COMMAND_CMD(0x3B, 0x98), //C0  For 4003D  98 = ILI4003 - New value!!!!!!
+
     COMMAND_CMD(0x38, 0x01),
     COMMAND_CMD(0x39, 0x00),
 
     SWITCH_PAGE_CMD(0x01),
 
     COMMAND_CMD(0x22, 0x0A),
-    COMMAND_CMD(0x31, 0x00),
-    COMMAND_CMD(0x50, 0xC0),
-    COMMAND_CMD(0x51, 0xC0),
-    COMMAND_CMD(0x53, 0x43),
+    COMMAND_CMD(0x31, 0x00), //Column inversion
+//  COMMAND_CMD(0x40, 0x33), //for EXT_CPCK_SEL for4003D - was commented out in the init sequence
+    COMMAND_CMD(0x50, 0xC0),//8D
+    COMMAND_CMD(0x51, 0xC0),//8A
+    COMMAND_CMD(0x53, 0x43),//VCOM
     COMMAND_CMD(0x55, 0x7A),
     COMMAND_CMD(0x60, 0x28),
     COMMAND_CMD(0x2E, 0xC8),
+
     COMMAND_CMD(0xA0, 0x01),
     COMMAND_CMD(0xA1, 0x11),
     COMMAND_CMD(0xA2, 0x1C),
@@ -303,16 +336,18 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0xA7, 0x1E),
     COMMAND_CMD(0xA8, 0x73),
     COMMAND_CMD(0xA9, 0x1C),
-    COMMAND_CMD(0xAA, 0x26),
-    COMMAND_CMD(0xAB, 0x63),
-    COMMAND_CMD(0xAC, 0x18),
-    COMMAND_CMD(0xAD, 0x16),
-    COMMAND_CMD(0xAE, 0x4D),
-    COMMAND_CMD(0xAF, 0x1F),
-    COMMAND_CMD(0xB0, 0x2A),
-    COMMAND_CMD(0xB1, 0x4F),
-    COMMAND_CMD(0xB2, 0x5F),
-    COMMAND_CMD(0xB3, 0x39),
+
+    COMMAND_CMD(0xAA, 0x26),//L111
+    COMMAND_CMD(0xAB, 0x63),//L80
+    COMMAND_CMD(0xAC, 0x18),//L52
+    COMMAND_CMD(0xAD, 0x16),//L36
+    COMMAND_CMD(0xAE, 0x4D),//L24
+    COMMAND_CMD(0xAF, 0x1F),//L16
+    COMMAND_CMD(0xB0, 0x2A),//L12
+    COMMAND_CMD(0xB1, 0x4F),//L8
+    COMMAND_CMD(0xB2, 0x5F),//L4
+    COMMAND_CMD(0xB3, 0x39),//L0
+
     COMMAND_CMD(0xC0, 0x01),
     COMMAND_CMD(0xC1, 0x11),
     COMMAND_CMD(0xC2, 0x1C),
@@ -323,16 +358,17 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0xC7, 0x1E),
     COMMAND_CMD(0xC8, 0x73),
     COMMAND_CMD(0xC9, 0x1C),
-    COMMAND_CMD(0xCA, 0x26),
-    COMMAND_CMD(0xCB, 0x63),
-    COMMAND_CMD(0xCC, 0x18),
-    COMMAND_CMD(0xCD, 0x16),
-    COMMAND_CMD(0xCE, 0x4D),
-    COMMAND_CMD(0xCF, 0x1F),
-    COMMAND_CMD(0xD0, 0x2A),
-    COMMAND_CMD(0xD1, 0x4F),
-    COMMAND_CMD(0xD2, 0x5F),
-    COMMAND_CMD(0xD3, 0x39),
+
+    COMMAND_CMD(0xCA, 0x26),//L111
+    COMMAND_CMD(0xCB, 0x63),//L80
+    COMMAND_CMD(0xCC, 0x18),//L52
+    COMMAND_CMD(0xCD, 0x16),//L36
+    COMMAND_CMD(0xCE, 0x4D),//L24
+    COMMAND_CMD(0xCF, 0x1F),//L16
+    COMMAND_CMD(0xD0, 0x2A),//L12
+    COMMAND_CMD(0xD1, 0x4F),//L8
+    COMMAND_CMD(0xD2, 0x5F),//L4
+    COMMAND_CMD(0xD3, 0x39),//L0
 
     SWITCH_PAGE_CMD(0x00),
 
@@ -1101,4 +1137,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.16");
+MODULE_VERSION("1.0.17");

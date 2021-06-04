@@ -1,3 +1,9 @@
+hgltp08 (1.0.17) buster; urgency=medium
+
+  * Changes in initialization sequence, from newer (hopefully better) specs
+
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 04 Jun 2021 13:00:00 +0200
+
 hgltp08 (1.0.16) buster; urgency=medium
 
   * Various changes trying to fix the issue
