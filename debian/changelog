@@ -1,3 +1,9 @@
+hgltp08 (1.0.18) buster; urgency=medium
+
+  * Removed the 'slow mode' code. Set flag to retry init sequence, with the proper VC4 driver it might succeed.
+
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 07 Jun 2021 15:00:00 +0200
+
 hgltp08 (1.0.17) buster; urgency=medium
 
   * Changes in initialization sequence, from newer (hopefully better) specs
