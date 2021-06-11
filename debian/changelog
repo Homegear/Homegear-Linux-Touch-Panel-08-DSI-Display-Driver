@@ -1,3 +1,9 @@
+hgltp08 (1.0.20) buster; urgency=medium
+
+  * Added a new gamma correction to test, added a command to set pixels off when blanking, added comments to initialization commands.
+
+ -- Adrian Roman <a.roman@ib-company.de>  Fri, 11 Jun 2021 17:00:00 +0200
+
 hgltp08 (1.0.19) buster; urgency=medium
 
   * Disabled the flag to retry init sequence, it locks things up for quite a while and it seldom succeeds without a changed VC4 driver.

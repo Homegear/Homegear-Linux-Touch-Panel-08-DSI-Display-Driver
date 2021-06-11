@@ -36,10 +36,12 @@
 
 #define INIT_CMDS_RETRIES 3 // reset usually fails each time, if it fails
 #define CMD_RETRIES 5 // usually if it doesn't recover after the first or second failure, it won't recover at all
-#define RETRY_DELAY 100
+#define RETRY_DELAY 120
 
 //#define NO_ENTER_OFF 1
-#define NO_ENTER_SLEEP 1
+//#define NO_ENTER_SLEEP 1
+
+#define USE_ORIG_GAMMA 1
 
 //#define RETRY_INIT_CMD 1 // with a proper change in VC4 driver, it might work
 
@@ -214,7 +216,7 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x31, 0x00),
     COMMAND_CMD(0x32, 0x00),
     COMMAND_CMD(0x33, 0x00),
-    COMMAND_CMD(0x34, 0x00),
+    COMMAND_CMD(0x34, 0x00), // GPWR1/2 non overlap time 2.62us ?
     COMMAND_CMD(0x35, 0x00),
     COMMAND_CMD(0x36, 0x00),
     COMMAND_CMD(0x37, 0x00),
@@ -238,6 +240,7 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x53, 0x67),
     COMMAND_CMD(0x54, 0x89),
     COMMAND_CMD(0x55, 0xAB),
+
     COMMAND_CMD(0x56, 0x01),
     COMMAND_CMD(0x57, 0x23),
     COMMAND_CMD(0x58, 0x45),
@@ -296,19 +299,28 @@ static const struct panel_command panel_cmds_init[] =
 
     SWITCH_PAGE_CMD(0x04),
 
-    COMMAND_CMD(0x6C, 0x15),
-    COMMAND_CMD(0x6E, 0x30), // VGH clamp 16.06       LCD SPEC  16
-    //COMMAND_CMD(0x6F, 0x33),  // old value
-    COMMAND_CMD(0x6F, 0x37), // 33  VGH pumping ratio 3x, VGL=-3x   ¸Ä³É37=VGH pumping ratio 3x, VGL=-3x
+    COMMAND_CMD(0x6C, 0x15), /* Set VCORE voltage = 1.5V */
+
+    COMMAND_CMD(0x6E, 0x30), // VGH clamp 16.06       LCD SPEC  16  - power control 2
+	//COMMAND_CMD(0x6E, 0x2A), /* di_pwr_reg=0 for power mode 2A, VGH clamp 18V */
+
+    //COMMAND_CMD(0x6F, 0x33),  // old value - pumping ratio VGH=5x VGL=-3x
+    COMMAND_CMD(0x6F, 0x37), // 33  VGH pumping ratio 3x, VGL=-3x   ¸Ä³É37=VGH pumping ratio 3x, VGL=-3x   - power control 3
+
     //COMMAND_CMD(0x8D, 0x87), // old value
-    COMMAND_CMD(0x8D, 0x1F), // VGL clamp -12.03      LCD SPEC -12
-    COMMAND_CMD(0x87, 0xBA), // LVD Function 1
+    COMMAND_CMD(0x8D, 0x1F), // VGL clamp -12.03      LCD SPEC -12  - power control 4
+	//COMMAND_CMD(0x8D, 0x1B), /* VGL clamp -10V */
+
+    COMMAND_CMD(0x87, 0xBA), // LVD Function 1 - ESD?
+
     COMMAND_CMD(0x26, 0x76), // SDTiming Control
     COMMAND_CMD(0xB2, 0xD1), // Reload Gamma Setting
     COMMAND_CMD(0x35, 0x1F),
     COMMAND_CMD(0x33, 0x14),
 
-    COMMAND_CMD(0x3A, 0xA9),
+    //COMMAND_CMD(0x3A, 0x24), POWER SAVING in ilitek-ili9881c driver
+    COMMAND_CMD(0x3A, 0xA9), // power saving
+
     COMMAND_CMD(0x3B, 0x98), //C0  For 4003D  98 = ILI4003 - New value!!!!!!
 
     COMMAND_CMD(0x38, 0x01),
@@ -316,65 +328,146 @@ static const struct panel_command panel_cmds_init[] =
 
     SWITCH_PAGE_CMD(0x01),
 
-    COMMAND_CMD(0x22, 0x0A),
-    COMMAND_CMD(0x31, 0x00), //Column inversion
-//  COMMAND_CMD(0x40, 0x33), //for EXT_CPCK_SEL for4003D - was commented out in the init sequence
+    COMMAND_CMD(0x22, 0x0A), // BGR, SS - Set Panel, Operation Mode and Data, Complement Setting  = BGR_PANEL & SS_PANEL for 0x0A - the 'Source Output Scan Direction' is backward for this setting
+    //COMMAND_CMD(0x22, 0x08), // Set Panel, Operation Mode and Data, Complement Setting  = BGR_PANEL & SS_PANEL for 0x08 - the 'Source Output Scan Direction' is forward for this setting - what this does compared with the other one is to turn the screen 'upside-down' (for the rotated variant)
+
+    // 0x25, 0x26, 0x27, 0x28 - blanking porch control
+
+    COMMAND_CMD(0x31, 0x00), //Column inversion - Zigzag type3 inversion = Display Inversion - default value 0x0 = Zigzag type3 inversion
+//  COMMAND_CMD(0x40, 0x33), //for EXT_CPCK_SEL for4003D - was commented out in the init sequence - also could be 0x53 - ILI4003D sel
+
+    // Power control 1 - both following
     COMMAND_CMD(0x50, 0xC0),//8D
     COMMAND_CMD(0x51, 0xC0),//8A
+
+    // VCOM control 1 - both following
     COMMAND_CMD(0x53, 0x43),//VCOM
     COMMAND_CMD(0x55, 0x7A),
-    COMMAND_CMD(0x60, 0x28),
-    COMMAND_CMD(0x2E, 0xC8),
 
+    // TODO: try this:
+	//COMMAND_CMD(0x53, 0xDC),
+	//COMMAND_CMD(0x55, 0xA7),
+	// or this:
+	//COMMAND_CMD(0x53, 0x4C),
+	//COMMAND_CMD(0x50, 0x87),
+	//COMMAND_CMD(0x51, 0x82),
+	// or try default, which is 7B for 53 and 55, 0 for the other two
+
+
+
+    COMMAND_CMD(0x60, 0x28),// Source Timing Adjust SDT[5:0] - originally in the initialization sequence
+    //COMMAND_CMD(0x60, 0x14), // Source Timing Adjust SDT[5:0] - default
+
+    // settings from ilitek-ili9881c driver - timings
+    //COMMAND_CMD(0x60, 0x15),
+	//COMMAND_CMD(0x61, 0x01),
+	//COMMAND_CMD(0x62, 0x0C),
+	//COMMAND_CMD(0x63, 0x00),
+	// ************************************
+
+    COMMAND_CMD(0x2E, 0xC8),// Gate Number 0xC8 is the default - the number of lines to drive the LCD at an interval of 4 lines - the default is 1280
+
+#ifdef USE_ORIG_GAMMA
+// positive gamma correction
     COMMAND_CMD(0xA0, 0x01),
-    COMMAND_CMD(0xA1, 0x11),
-    COMMAND_CMD(0xA2, 0x1C),
-    COMMAND_CMD(0xA3, 0x0E),
-    COMMAND_CMD(0xA4, 0x15),
-    COMMAND_CMD(0xA5, 0x28),
-    COMMAND_CMD(0xA6, 0x1C),
-    COMMAND_CMD(0xA7, 0x1E),
-    COMMAND_CMD(0xA8, 0x73),
-    COMMAND_CMD(0xA9, 0x1C),
+    COMMAND_CMD(0xA1, 0x11), /* VP251 */
+    COMMAND_CMD(0xA2, 0x1C), /* VP247 */
+    COMMAND_CMD(0xA3, 0x0E), /* VP243 */
+    COMMAND_CMD(0xA4, 0x15), /* VP239 */
+    COMMAND_CMD(0xA5, 0x28), /* VP231 */
+    COMMAND_CMD(0xA6, 0x1C), /* VP219 */
+    COMMAND_CMD(0xA7, 0x1E), /* VP203 */
+    COMMAND_CMD(0xA8, 0x73), /* VP175 */
+    COMMAND_CMD(0xA9, 0x1C), /* VP144 */
 
-    COMMAND_CMD(0xAA, 0x26),//L111
-    COMMAND_CMD(0xAB, 0x63),//L80
-    COMMAND_CMD(0xAC, 0x18),//L52
-    COMMAND_CMD(0xAD, 0x16),//L36
-    COMMAND_CMD(0xAE, 0x4D),//L24
-    COMMAND_CMD(0xAF, 0x1F),//L16
-    COMMAND_CMD(0xB0, 0x2A),//L12
-    COMMAND_CMD(0xB1, 0x4F),//L8
-    COMMAND_CMD(0xB2, 0x5F),//L4
-    COMMAND_CMD(0xB3, 0x39),//L0
+    COMMAND_CMD(0xAA, 0x26),//L111 /* VP111 */
+    COMMAND_CMD(0xAB, 0x63),//L80  /* VP80 */
+    COMMAND_CMD(0xAC, 0x18),//L52  /* VP52 */
+    COMMAND_CMD(0xAD, 0x16),//L36  /* VP36 */
+    COMMAND_CMD(0xAE, 0x4D),//L24  /* VP24 */
+    COMMAND_CMD(0xAF, 0x1F),//L16  /* VP16 */
+    COMMAND_CMD(0xB0, 0x2A),//L12  /* VP12 */
+    COMMAND_CMD(0xB1, 0x4F),//L8   /* VP8 */
+    COMMAND_CMD(0xB2, 0x5F),//L4   /* VP4 */
+    COMMAND_CMD(0xB3, 0x39),//L0   /* VP0 */
 
-    COMMAND_CMD(0xC0, 0x01),
-    COMMAND_CMD(0xC1, 0x11),
-    COMMAND_CMD(0xC2, 0x1C),
-    COMMAND_CMD(0xC3, 0x0E),
-    COMMAND_CMD(0xC4, 0x15),
-    COMMAND_CMD(0xC5, 0x28),
-    COMMAND_CMD(0xC6, 0x1C),
-    COMMAND_CMD(0xC7, 0x1E),
-    COMMAND_CMD(0xC8, 0x73),
-    COMMAND_CMD(0xC9, 0x1C),
+// negative gamma correction
+    COMMAND_CMD(0xC0, 0x01), /* VN255 GAMMA N */
+    COMMAND_CMD(0xC1, 0x11), /* VN251 */
+    COMMAND_CMD(0xC2, 0x1C), /* VN247 */
+    COMMAND_CMD(0xC3, 0x0E), /* VN243 */
+    COMMAND_CMD(0xC4, 0x15), /* VN239 */
+    COMMAND_CMD(0xC5, 0x28), /* VN231 */
+    COMMAND_CMD(0xC6, 0x1C), /* VN219 */
+    COMMAND_CMD(0xC7, 0x1E), /* VN203 */
+    COMMAND_CMD(0xC8, 0x73), /* VN175 */
+    COMMAND_CMD(0xC9, 0x1C), /* VN144 */
 
-    COMMAND_CMD(0xCA, 0x26),//L111
-    COMMAND_CMD(0xCB, 0x63),//L80
-    COMMAND_CMD(0xCC, 0x18),//L52
-    COMMAND_CMD(0xCD, 0x16),//L36
-    COMMAND_CMD(0xCE, 0x4D),//L24
-    COMMAND_CMD(0xCF, 0x1F),//L16
-    COMMAND_CMD(0xD0, 0x2A),//L12
-    COMMAND_CMD(0xD1, 0x4F),//L8
-    COMMAND_CMD(0xD2, 0x5F),//L4
-    COMMAND_CMD(0xD3, 0x39),//L0
+    COMMAND_CMD(0xCA, 0x26),//L111 /* VN111 */
+    COMMAND_CMD(0xCB, 0x63),//L80  /* VN80 */
+    COMMAND_CMD(0xCC, 0x18),//L52  /* VN52 */
+    COMMAND_CMD(0xCD, 0x16),//L36  /* VN36 */
+    COMMAND_CMD(0xCE, 0x4D),//L24  /* VN24 */
+    COMMAND_CMD(0xCF, 0x1F),//L16  /* VN16 */
+    COMMAND_CMD(0xD0, 0x2A),//L12  /* VN12 */
+    COMMAND_CMD(0xD1, 0x4F),//L8   /* VN8 */
+    COMMAND_CMD(0xD2, 0x5F),//L4   /* VN4 */
+    COMMAND_CMD(0xD3, 0x39),//L0   /* VN0 */
+#else
+	COMMAND_CMD(0xA0, 0x00),
+	COMMAND_CMD(0xA1, 0x13), /* VP251 */
+	COMMAND_CMD(0xA2, 0x23), /* VP247 */
+	COMMAND_CMD(0xA3, 0x14), /* VP243 */
+	COMMAND_CMD(0xA4, 0x16), /* VP239 */
+	COMMAND_CMD(0xA5, 0x29), /* VP231 */
+	COMMAND_CMD(0xA6, 0x1E), /* VP219 */
+	COMMAND_CMD(0xA7, 0x1D), /* VP203 */
+	COMMAND_CMD(0xA8, 0x86), /* VP175 */
+	COMMAND_CMD(0xA9, 0x1E), /* VP144 */
+	COMMAND_CMD(0xAA, 0x29), /* VP111 */
+	COMMAND_CMD(0xAB, 0x74), /* VP80 */
+	COMMAND_CMD(0xAC, 0x19), /* VP52 */
+	COMMAND_CMD(0xAD, 0x17), /* VP36 */
+	COMMAND_CMD(0xAE, 0x4B), /* VP24 */
+	COMMAND_CMD(0xAF, 0x20), /* VP16 */
+	COMMAND_CMD(0xB0, 0x26), /* VP12 */
+	COMMAND_CMD(0xB1, 0x4C), /* VP8 */
+	COMMAND_CMD(0xB2, 0x5D), /* VP4 */
+	COMMAND_CMD(0xB3, 0x3F), /* VP0 */
+	COMMAND_CMD(0xC0, 0x00), /* VN255 GAMMA N */
+	COMMAND_CMD(0xC1, 0x13), /* VN251 */
+	COMMAND_CMD(0xC2, 0x23), /* VN247 */
+	COMMAND_CMD(0xC3, 0x14), /* VN243 */
+	COMMAND_CMD(0xC4, 0x16), /* VN239 */
+	COMMAND_CMD(0xC5, 0x29), /* VN231 */
+	COMMAND_CMD(0xC6, 0x1E), /* VN219 */
+	COMMAND_CMD(0xC7, 0x1D), /* VN203 */
+	COMMAND_CMD(0xC8, 0x86), /* VN175 */
+	COMMAND_CMD(0xC9, 0x1E), /* VN144 */
+	COMMAND_CMD(0xCA, 0x29), /* VN111 */
+	COMMAND_CMD(0xCB, 0x74), /* VN80 */
+	COMMAND_CMD(0xCC, 0x19), /* VN52 */
+	COMMAND_CMD(0xCD, 0x17), /* VN36 */
+	COMMAND_CMD(0xCE, 0x4B), /* VN24 */
+	COMMAND_CMD(0xCF, 0x20), /* VN16 */
+	COMMAND_CMD(0xD0, 0x26), /* VN12 */
+	COMMAND_CMD(0xD1, 0x4C), /* VN8 */
+	COMMAND_CMD(0xD2, 0x5D), /* VN4 */
+	COMMAND_CMD(0xD3, 0x3F), /* VN0 */
+#endif
 
     SWITCH_PAGE_CMD(0x00),
 
-    COMMAND_CMD(0x35, 0x00),
-    CMD_DELAY(0x11, 0x00, 100),
-    CMD_DELAY(0x29, 0x00, 100),
+    //COMMAND_CMD(0x55, 0x00), // This is the power save, 0x0 is the default, power save off
+
+    COMMAND_CMD(0x35, 0x00),// TE ON, only V-Blanking, 0x34 TE OFF
+    CMD_DELAY(0x11, 0x00, 120),// Sleep Out - sleep in is 0x10
+    CMD_DELAY(0x29, 0x00, 120),// Display ON (OFF is 0x28)
+    //CMD_DELAY(0x38, 0x00, 120), // Idle mode off
+
+    // some other commands: 0x1 - software reset, 0x13 normal display mode on, 0x22 all pixels off 0x23 - all pixels on
+    // 0x38 idle mode off, 0x39 idle mode on, 0x59 stop transition
+    // 0x51 - display brightness
 };
 
 
@@ -591,7 +684,7 @@ static int hgltp08_prepare(struct drm_panel *panel)
         return ret;
     }
 
-    msleep(100);
+    msleep(120);
     */
 
     ctx->prepared = true;
@@ -613,8 +706,22 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 
     printk(KERN_ALERT "Unpreparing!\n");
 
+    cmdcnt = 0;
+    do
+    {
+        ret = send_cmd_data(ctx, 0x22, 0x00);
+        if (ret) msleep(RETRY_DELAY);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt < CMD_RETRIES);
 
-    //msleep(20); // sometimes the following call gets a 'transfer interrupt wait timeout', maybe this delay makes some difference?
+    if (ret)
+    {
+        printk(KERN_WARNING "failed to set pixels off %d\n", ret);
+        atomic_set(&errorFlag, 1);
+    }
+
+    msleep(20);
 
 #ifndef NO_ENTER_SLEEP
 
@@ -635,7 +742,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
-    msleep(100);
+    msleep(120);
 #endif // NO_ENTER_SLEEP
 
     if (ctx->gpioBacklightD)
@@ -662,8 +769,6 @@ static int hgltp08_enable(struct drm_panel *panel)
 
     if (ctx->enabled)
         return 0;
-
-    printk(KERN_ALERT "Enabling!\n");
 
     cmdcnt = 0;
     do
@@ -704,7 +809,7 @@ static int hgltp08_enable(struct drm_panel *panel)
         }
         else ctx->isOn = true;
 
-        msleep(100);
+        msleep(120);
     }
 
     if (ctx->gpioBacklightD)
@@ -750,7 +855,7 @@ static int hgltp08_disable(struct drm_panel *panel)
 
     ctx->isOn = false;
 
-    msleep(100);
+    msleep(120);
 #endif
 
     if (ctx->gpioBacklightD)
@@ -926,6 +1031,7 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
     dsi->lanes = 4;
     dsi->format = MIPI_DSI_FMT_RGB888;
 
+    //MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST | MIPI_DSI_CLOCK_NON_CONTINUOUS
     dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_LPM;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
@@ -1036,4 +1142,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.19");
+MODULE_VERSION("1.0.20");
