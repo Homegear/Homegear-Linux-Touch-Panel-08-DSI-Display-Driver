@@ -576,7 +576,7 @@ static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
         {
             printk(KERN_ALERT "Couldn't send initialization command!\n");
 
-            atomic_set(&errorFlag, 1);
+            //atomic_set(&errorFlag, 1); // don't set the error flag here, the sequence is retried and if it fails several times, then it is set
 
             return ret;
         }
@@ -1142,4 +1142,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.20");
+MODULE_VERSION("1.0.21");
