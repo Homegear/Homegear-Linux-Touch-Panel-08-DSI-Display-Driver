@@ -45,6 +45,8 @@
 
 //#define RETRY_INIT_CMD 1 // with a proper change in VC4 driver, it might work
 
+#define ENABLE_DITHERING 1
+
 static atomic_t errorFlag = ATOMIC_INIT(0);
 struct proc_dir_entry *procFile;
 
@@ -333,8 +335,13 @@ static const struct panel_command panel_cmds_init[] =
 
     // 0x25, 0x26, 0x27, 0x28 - blanking porch control
 
-    COMMAND_CMD(0x31, 0x00), //Column inversion - Zigzag type3 inversion = Display Inversion - default value 0x0 = Zigzag type3 inversion
+    COMMAND_CMD(0x31, 0x00), //Column inversion - Zigzag type3 inversion = Display Inversion - default value 0x0???????
+
 //  COMMAND_CMD(0x40, 0x33), //for EXT_CPCK_SEL for4003D - was commented out in the init sequence - also could be 0x53 - ILI4003D sel
+
+#ifdef ENABLE_DITHERING
+	COMMAND_CMD(0x34, 0x1), // dithering enable
+#endif // ENABLE_DITHERING
 
     // Power control 1 - both following
     COMMAND_CMD(0x50, 0xC0),//8D
@@ -512,10 +519,27 @@ static int send_cmd_data(struct hgltp08_touchscreen *ctx, u8 cmd, u8 data)
     u8 buf[2] = { cmd, data };
     int ret;
 
+    // mipi_dsi_generic_write could be used as well, the only difference is that mipi_dsi_generic_write allows zero parameters
     ret = mipi_dsi_dcs_write_buffer(ctx->dsi, buf, sizeof(buf));
     if (ret < 0)
     {
         printk(KERN_ALERT "MIPI DSI DCS write failed: %d\n", ret);
+
+        return ret;
+    }
+
+    return 0;
+}
+
+static int send_cmd_data_read(struct hgltp08_touchscreen *ctx, u8 cmd, u8 data, void *rdata, size_t size)
+{
+    u8 buf[2] = { cmd, data };
+    int ret;
+
+    ret = mipi_dsi_generic_read(ctx->dsi, buf, sizeof(buf), rdata, size);
+    if (ret < 0)
+    {
+        printk(KERN_ALERT "MIPI DSI DCS read failed: %d\n", ret);
 
         return ret;
     }
@@ -1142,4 +1166,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.21");
+MODULE_VERSION("1.0.22");
