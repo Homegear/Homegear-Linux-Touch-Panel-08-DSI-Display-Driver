@@ -47,6 +47,9 @@
 
 #define ENABLE_DITHERING 1
 
+//#define TEST_READ 1
+
+
 static atomic_t errorFlag = ATOMIC_INIT(0);
 struct proc_dir_entry *procFile;
 
@@ -344,12 +347,12 @@ static const struct panel_command panel_cmds_init[] =
 #endif // ENABLE_DITHERING
 
     // Power control 1 - both following
-    COMMAND_CMD(0x50, 0xC0),//8D
-    COMMAND_CMD(0x51, 0xC0),//8A
+    COMMAND_CMD(0x50, 0xC0),//8D - 5V
+    COMMAND_CMD(0x51, 0xC0),//8A - 5V
 
     // VCOM control 1 - both following
-    COMMAND_CMD(0x53, 0x43),//VCOM
-    COMMAND_CMD(0x55, 0x7A),
+    COMMAND_CMD(0x53, 0x43),//VCOM   816 mV
+    COMMAND_CMD(0x55, 0x7A),// 1476 mV
 
     // TODO: try this:
 	//COMMAND_CMD(0x53, 0xDC),
@@ -631,6 +634,9 @@ static int hgltp08_prepare(struct drm_panel *panel)
     struct mipi_dsi_device *dsi = ctx->dsi;
     int ret;
     int cmdcnt;
+#ifdef TEST_READ
+    u8 read_val;
+#endif // TEST_READ
 
     if (ctx->prepared)
         return 0;
@@ -663,6 +669,18 @@ static int hgltp08_prepare(struct drm_panel *panel)
     }
 
     ctx->isOn = true;
+
+#ifdef TEST_READ
+    switch_page(ctx, 1);
+
+    read_val = 0;
+    ret = send_cmd_data_read(ctx, 0x34, 0x0, &read_val, 1);
+    if (!ret)
+    {
+        printk(KERN_ALERT "Read val for dithering: %d\n", (int)read_val);
+    }
+    switch_page(ctx, 0);
+#endif // TEST_READ
 
     //COMMAND_CMD(0x35, 0x00) is TE on
 
@@ -729,23 +747,6 @@ static int hgltp08_unprepare(struct drm_panel *panel)
         return 0;
 
     printk(KERN_ALERT "Unpreparing!\n");
-
-    cmdcnt = 0;
-    do
-    {
-        ret = send_cmd_data(ctx, 0x22, 0x00);
-        if (ret) msleep(RETRY_DELAY);
-        ++cmdcnt;
-    }
-    while (ret && cmdcnt < CMD_RETRIES);
-
-    if (ret)
-    {
-        printk(KERN_WARNING "failed to set pixels off %d\n", ret);
-        atomic_set(&errorFlag, 1);
-    }
-
-    msleep(20);
 
 #ifndef NO_ENTER_SLEEP
 
@@ -857,6 +858,23 @@ static int hgltp08_disable(struct drm_panel *panel)
         return 0;
 
     printk(KERN_ALERT "Disabling!\n");
+
+    cmdcnt = 0;
+    do
+    {
+        ret = send_cmd_data(ctx, 0x22, 0x00);
+        if (ret) msleep(RETRY_DELAY);
+        ++cmdcnt;
+    }
+    while (ret && cmdcnt < CMD_RETRIES);
+
+    if (ret)
+    {
+        printk(KERN_WARNING "failed to set pixels off %d\n", ret);
+        atomic_set(&errorFlag, 1);
+    }
+
+    msleep(20);
 
 #ifndef NO_ENTER_OFF
 //  stop displaying the image data on the display device
