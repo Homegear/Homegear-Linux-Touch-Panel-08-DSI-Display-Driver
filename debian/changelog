@@ -1,8 +1,14 @@
+hgltp08 (1.0.23) buster; urgency=medium
+
+  * Some more features to turn on/off with defines, tweaked some other things
+
+ -- Adrian Roman <a.roman@ib-company.de>  Fri, 18 Jun 2021 17:00:00 +0200
+
 hgltp08 (1.0.22) buster; urgency=medium
 
   * Enabled dithering
 
- -- Adrian Roman <a.roman@ib-company.de>  Wen, 16 Jun 2021 13:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Wed, 16 Jun 2021 13:00:00 +0200
 
 hgltp08 (1.0.21) buster; urgency=medium
 

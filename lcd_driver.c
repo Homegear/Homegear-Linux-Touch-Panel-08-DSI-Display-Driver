@@ -46,6 +46,8 @@
 //#define RETRY_INIT_CMD 1 // with a proper change in VC4 driver, it might work
 
 #define ENABLE_DITHERING 1
+//#define INVERSION 1
+//#define SET_PIXELS_OFF 1
 
 //#define TEST_READ 1
 
@@ -142,28 +144,6 @@ struct panel_command
 	}
 
 #define COMMAND_CMD(_cmd, _data) CMD_DELAY(_cmd, _data, 0)
-
-
-
-/*
-
-
-
-
-SET_GENERIC(4);W_D(0xFF);W_D(0x98);W_D(0x81);W_D(0x00);
-SET_GENERIC(2);W_D(0x35);W_D(0x00);
-
-SET_GENERIC(2);W_D(0x11);W_D(0x00);
-delay_ms(100);
-
-SET_GENERIC(2);W_D(0x29);W_D(0x00);
-delay_ms(100);
-*/
-
-
-
-
-
 
 static const struct panel_command panel_cmds_init[] =
 {
@@ -338,7 +318,11 @@ static const struct panel_command panel_cmds_init[] =
 
     // 0x25, 0x26, 0x27, 0x28 - blanking porch control
 
-    COMMAND_CMD(0x31, 0x00), //Column inversion - Zigzag type3 inversion = Display Inversion - default value 0x0???????
+#ifdef INVERSION
+    COMMAND_CMD(0x31, 0x04),
+#else
+    COMMAND_CMD(0x31, 0x00), //Column inversion - Display Inversion - default value 0x0
+#endif // INVERSION
 
 //  COMMAND_CMD(0x40, 0x33), //for EXT_CPCK_SEL for4003D - was commented out in the init sequence - also could be 0x53 - ILI4003D sel
 
@@ -354,18 +338,8 @@ static const struct panel_command panel_cmds_init[] =
     COMMAND_CMD(0x53, 0x43),//VCOM   816 mV
     COMMAND_CMD(0x55, 0x7A),// 1476 mV
 
-    // TODO: try this:
-	//COMMAND_CMD(0x53, 0xDC),
-	//COMMAND_CMD(0x55, 0xA7),
-	// or this:
-	//COMMAND_CMD(0x53, 0x4C),
-	//COMMAND_CMD(0x50, 0x87),
-	//COMMAND_CMD(0x51, 0x82),
-	// or try default, which is 7B for 53 and 55, 0 for the other two
-
-
-
     COMMAND_CMD(0x60, 0x28),// Source Timing Adjust SDT[5:0] - originally in the initialization sequence
+
     //COMMAND_CMD(0x60, 0x14), // Source Timing Adjust SDT[5:0] - default
 
     // settings from ilitek-ili9881c driver - timings
@@ -679,6 +653,14 @@ static int hgltp08_prepare(struct drm_panel *panel)
     {
         printk(KERN_ALERT "Read val for dithering: %d\n", (int)read_val);
     }
+
+    read_val = 0;
+    ret = send_cmd_data_read(ctx, 0x31, 0x0, &read_val, 1);
+    if (!ret)
+    {
+        printk(KERN_ALERT "Read val for display inversion: 0x%08x\n", (int)read_val);
+    }
+
     switch_page(ctx, 0);
 #endif // TEST_READ
 
@@ -751,6 +733,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 #ifndef NO_ENTER_SLEEP
 
 // disable all unnecessary blocks inside the display module except interface communication
+    msleep(20);
 
     cmdcnt = 0;
     do
@@ -790,7 +773,6 @@ static int hgltp08_enable(struct drm_panel *panel)
     int ret;
     int cmdcnt;
     struct mipi_dsi_device *dsi = ctx->dsi;
-
 
     if (ctx->enabled)
         return 0;
@@ -859,6 +841,8 @@ static int hgltp08_disable(struct drm_panel *panel)
 
     printk(KERN_ALERT "Disabling!\n");
 
+    // display off should be enough
+#ifdef SET_PIXELS_OFF
     cmdcnt = 0;
     do
     {
@@ -873,11 +857,12 @@ static int hgltp08_disable(struct drm_panel *panel)
         printk(KERN_WARNING "failed to set pixels off %d\n", ret);
         atomic_set(&errorFlag, 1);
     }
-
-    msleep(20);
+#endif
 
 #ifndef NO_ENTER_OFF
 //  stop displaying the image data on the display device
+
+    msleep(20);
 
     cmdcnt = 0;
     do
@@ -1074,7 +1059,7 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
     dsi->format = MIPI_DSI_FMT_RGB888;
 
     //MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST | MIPI_DSI_CLOCK_NON_CONTINUOUS
-    dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_LPM;
+    dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM;
 
     printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
@@ -1184,4 +1169,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.22");
+MODULE_VERSION("1.0.23");
