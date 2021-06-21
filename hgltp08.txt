@@ -1,0 +1,256 @@
+    SWITCH_PAGE_CMD(0x03),
+
+    COMMAND_CMD(0x01, 0x00),
+    COMMAND_CMD(0x02, 0x00),
+    COMMAND_CMD(0x03, 0x53),
+    COMMAND_CMD(0x04, 0x53),
+    COMMAND_CMD(0x05, 0x13),
+    COMMAND_CMD(0x06, 0x4),
+    COMMAND_CMD(0x07, 0x2),
+    COMMAND_CMD(0x08, 0x2),
+    COMMAND_CMD(0x09, 0x0),
+    COMMAND_CMD(0x0A, 0x0),
+    COMMAND_CMD(0x0B, 0x0),
+    COMMAND_CMD(0x0C, 0x0),
+    COMMAND_CMD(0x0D, 0x0),
+    COMMAND_CMD(0x0E, 0x0),
+    COMMAND_CMD(0x0F, 0x0),
+    COMMAND_CMD(0x10, 0x0),
+    COMMAND_CMD(0x11, 0x0),
+    COMMAND_CMD(0x12, 0x0),
+    COMMAND_CMD(0x13, 0x0),
+    COMMAND_CMD(0x14, 0x0),
+    COMMAND_CMD(0x15, 0x0),
+    COMMAND_CMD(0x16, 0x0),
+    COMMAND_CMD(0x17, 0x0),
+    COMMAND_CMD(0x18, 0x0),
+    COMMAND_CMD(0x19, 0x0),
+    COMMAND_CMD(0x1A, 0x0),
+    COMMAND_CMD(0x1B, 0x0),
+    COMMAND_CMD(0x1C, 0x0),
+    COMMAND_CMD(0x1D, 0x0),
+
+    COMMAND_CMD(0x1E, 0xC0),
+    COMMAND_CMD(0x1F, 0x80),
+    COMMAND_CMD(0x20, 0x02),
+    COMMAND_CMD(0x21, 0x09),
+    COMMAND_CMD(0x22, 0x00),
+    COMMAND_CMD(0x23, 0x00),
+    COMMAND_CMD(0x24, 0x00),
+    COMMAND_CMD(0x25, 0x00),
+    COMMAND_CMD(0x26, 0x00),
+    COMMAND_CMD(0x27, 0x00),
+    COMMAND_CMD(0x28, 0x55),
+    COMMAND_CMD(0x29, 0x03),
+    COMMAND_CMD(0x2A, 0x00),
+    COMMAND_CMD(0x2B, 0x00),
+    COMMAND_CMD(0x2C, 0x00),
+    COMMAND_CMD(0x2D, 0x00),
+    COMMAND_CMD(0x2E, 0x00),
+    COMMAND_CMD(0x2F, 0x00),
+    COMMAND_CMD(0x30, 0x00),
+    COMMAND_CMD(0x31, 0x00),
+    COMMAND_CMD(0x32, 0x00),
+    COMMAND_CMD(0x33, 0x00),
+    COMMAND_CMD(0x34, 0x00), // GPWR1/2 non overlap time 2.62us ?
+    COMMAND_CMD(0x35, 0x00),
+    COMMAND_CMD(0x36, 0x00),
+    COMMAND_CMD(0x37, 0x00),
+
+    COMMAND_CMD(0x38, 0x3C),
+    COMMAND_CMD(0x39, 0x00),
+    COMMAND_CMD(0x3A, 0x00),
+    COMMAND_CMD(0x3B, 0x00),
+    COMMAND_CMD(0x3C, 0x00),
+    COMMAND_CMD(0x3D, 0x00),
+    COMMAND_CMD(0x3E, 0x00),
+    COMMAND_CMD(0x3F, 0x00),
+    COMMAND_CMD(0x40, 0x00),
+    COMMAND_CMD(0x41, 0x00),
+    COMMAND_CMD(0x42, 0x00),
+    COMMAND_CMD(0x43, 0x00),
+    COMMAND_CMD(0x44, 0x00),
+    COMMAND_CMD(0x50, 0x01),
+    COMMAND_CMD(0x51, 0x23),
+    COMMAND_CMD(0x52, 0x45),
+    COMMAND_CMD(0x53, 0x67),
+    COMMAND_CMD(0x54, 0x89),
+    COMMAND_CMD(0x55, 0xAB),
+
+    COMMAND_CMD(0x56, 0x01),
+    COMMAND_CMD(0x57, 0x23),
+    COMMAND_CMD(0x58, 0x45),
+    COMMAND_CMD(0x59, 0x67),
+    COMMAND_CMD(0x5A, 0x89),
+    COMMAND_CMD(0x5B, 0xAB),
+    COMMAND_CMD(0x5C, 0xCD),
+    COMMAND_CMD(0x5D, 0xEF),
+    COMMAND_CMD(0x5E, 0x01),
+    COMMAND_CMD(0x5F, 0x08),
+    COMMAND_CMD(0x60, 0x02),
+
+    COMMAND_CMD(0x61, 0x02),
+    COMMAND_CMD(0x62, 0x0A),
+    COMMAND_CMD(0x63, 0x15),
+    COMMAND_CMD(0x64, 0x14),
+    COMMAND_CMD(0x65, 0x02),
+    COMMAND_CMD(0x66, 0x11),
+    COMMAND_CMD(0x67, 0x10),
+    COMMAND_CMD(0x68, 0x02),
+    COMMAND_CMD(0x69, 0x0F),
+    COMMAND_CMD(0x6A, 0x0E),
+    COMMAND_CMD(0x6B, 0x02),
+    COMMAND_CMD(0x6C, 0x0D),
+    COMMAND_CMD(0x6D, 0x0C),
+    COMMAND_CMD(0x6E, 0x06),
+    COMMAND_CMD(0x6F, 0x02),
+    COMMAND_CMD(0x70, 0x02),
+    COMMAND_CMD(0x71, 0x02),
+    COMMAND_CMD(0x72, 0x02),
+    COMMAND_CMD(0x73, 0x02),
+    COMMAND_CMD(0x74, 0x02),
+    COMMAND_CMD(0x75, 0x06),
+    COMMAND_CMD(0x76, 0x02),
+    COMMAND_CMD(0x77, 0x02),
+    COMMAND_CMD(0x78, 0x0A),
+    COMMAND_CMD(0x79, 0x15),
+    COMMAND_CMD(0x7A, 0x14),
+    COMMAND_CMD(0x7B, 0x02),
+    COMMAND_CMD(0x7C, 0x10),
+    COMMAND_CMD(0x7D, 0x11),
+    COMMAND_CMD(0x7E, 0x02),
+    COMMAND_CMD(0x7F, 0x0C),
+
+    COMMAND_CMD(0x80, 0x0D),
+    COMMAND_CMD(0x81, 0x02),
+    COMMAND_CMD(0x82, 0x0E),
+    COMMAND_CMD(0x83, 0x0F),
+    COMMAND_CMD(0x84, 0x08),
+    COMMAND_CMD(0x85, 0x02),
+    COMMAND_CMD(0x86, 0x02),
+    COMMAND_CMD(0x87, 0x02),
+    COMMAND_CMD(0x88, 0x02),
+    COMMAND_CMD(0x89, 0x02),
+    COMMAND_CMD(0x8A, 0x02),
+
+    SWITCH_PAGE_CMD(0x04),
+
+    COMMAND_CMD(0x6C, 0x15), /* Set VCORE voltage = 1.5V */
+
+    COMMAND_CMD(0x6E, 0x30), // VGH clamp 16.06       LCD SPEC  16  - power control 2
+	//COMMAND_CMD(0x6E, 0x2A), /* di_pwr_reg=0 for power mode 2A, VGH clamp 18V */
+
+    //COMMAND_CMD(0x6F, 0x33),  // old value - pumping ratio VGH=5x VGL=-3x
+    COMMAND_CMD(0x6F, 0x37), // 33  VGH pumping ratio 3x, VGL=-3x   ¸Ä³É37=VGH pumping ratio 3x, VGL=-3x   - power control 3
+
+    //COMMAND_CMD(0x8D, 0x87), // old value
+    COMMAND_CMD(0x8D, 0x1F), // VGL clamp -12.03      LCD SPEC -12  - power control 4
+	//COMMAND_CMD(0x8D, 0x1B), /* VGL clamp -10V */
+
+    COMMAND_CMD(0x87, 0xBA), // LVD Function 1 - ESD?
+
+    COMMAND_CMD(0x26, 0x76), // SDTiming Control
+    COMMAND_CMD(0xB2, 0xD1), // Reload Gamma Setting
+    COMMAND_CMD(0x35, 0x1F),
+    COMMAND_CMD(0x33, 0x14),
+
+    //COMMAND_CMD(0x3A, 0x24), POWER SAVING in ilitek-ili9881c driver
+    COMMAND_CMD(0x3A, 0xA9), // power saving
+
+    COMMAND_CMD(0x3B, 0x98), //C0  For 4003D  98 = ILI4003 - New value!!!!!!
+
+    COMMAND_CMD(0x38, 0x01),
+    COMMAND_CMD(0x39, 0x00),
+
+    SWITCH_PAGE_CMD(0x01),
+
+    COMMAND_CMD(0x22, 0x0A), // BGR, SS - Set Panel, Operation Mode and Data, Complement Setting  = BGR_PANEL & SS_PANEL for 0x0A - the 'Source Output Scan Direction' is backward for this setting
+    //COMMAND_CMD(0x22, 0x08), // Set Panel, Operation Mode and Data, Complement Setting  = BGR_PANEL & SS_PANEL for 0x08 - the 'Source Output Scan Direction' is forward for this setting - what this does compared with the other one is to turn the screen 'upside-down' (for the rotated variant)
+
+    // 0x25, 0x26, 0x27, 0x28 - blanking porch control
+
+    COMMAND_CMD(0x31, 0x00), //Column inversion - Display Inversion - default value 0x0
+
+//  COMMAND_CMD(0x40, 0x33), //for EXT_CPCK_SEL for4003D - was commented out in the init sequence - also could be 0x53 - ILI4003D sel
+
+	COMMAND_CMD(0x34, 0x1), // dithering enable
+
+    // Power control 1 - both following
+    COMMAND_CMD(0x50, 0xC0),//8D - 5V
+    COMMAND_CMD(0x51, 0xC0),//8A - 5V
+
+    // VCOM control 1 - both following
+    COMMAND_CMD(0x53, 0x43),//VCOM   816 mV
+    COMMAND_CMD(0x55, 0x7A),// 1476 mV
+
+    COMMAND_CMD(0x60, 0x28),// Source Timing Adjust SDT[5:0] - originally in the initialization sequence
+
+    //COMMAND_CMD(0x60, 0x14), // Source Timing Adjust SDT[5:0] - default
+
+    // settings from ilitek-ili9881c driver - timings
+    //COMMAND_CMD(0x60, 0x15),
+	//COMMAND_CMD(0x61, 0x01),
+	//COMMAND_CMD(0x62, 0x0C),
+	//COMMAND_CMD(0x63, 0x00),
+	// ************************************
+
+    COMMAND_CMD(0x2E, 0xC8),// Gate Number 0xC8 is the default - the number of lines to drive the LCD at an interval of 4 lines - the default is 1280
+
+// positive gamma correction
+    COMMAND_CMD(0xA0, 0x01),
+    COMMAND_CMD(0xA1, 0x11), /* VP251 */
+    COMMAND_CMD(0xA2, 0x1C), /* VP247 */
+    COMMAND_CMD(0xA3, 0x0E), /* VP243 */
+    COMMAND_CMD(0xA4, 0x15), /* VP239 */
+    COMMAND_CMD(0xA5, 0x28), /* VP231 */
+    COMMAND_CMD(0xA6, 0x1C), /* VP219 */
+    COMMAND_CMD(0xA7, 0x1E), /* VP203 */
+    COMMAND_CMD(0xA8, 0x73), /* VP175 */
+    COMMAND_CMD(0xA9, 0x1C), /* VP144 */
+
+    COMMAND_CMD(0xAA, 0x26),//L111 /* VP111 */
+    COMMAND_CMD(0xAB, 0x63),//L80  /* VP80 */
+    COMMAND_CMD(0xAC, 0x18),//L52  /* VP52 */
+    COMMAND_CMD(0xAD, 0x16),//L36  /* VP36 */
+    COMMAND_CMD(0xAE, 0x4D),//L24  /* VP24 */
+    COMMAND_CMD(0xAF, 0x1F),//L16  /* VP16 */
+    COMMAND_CMD(0xB0, 0x2A),//L12  /* VP12 */
+    COMMAND_CMD(0xB1, 0x4F),//L8   /* VP8 */
+    COMMAND_CMD(0xB2, 0x5F),//L4   /* VP4 */
+    COMMAND_CMD(0xB3, 0x39),//L0   /* VP0 */
+
+// negative gamma correction
+    COMMAND_CMD(0xC0, 0x01), /* VN255 GAMMA N */
+    COMMAND_CMD(0xC1, 0x11), /* VN251 */
+    COMMAND_CMD(0xC2, 0x1C), /* VN247 */
+    COMMAND_CMD(0xC3, 0x0E), /* VN243 */
+    COMMAND_CMD(0xC4, 0x15), /* VN239 */
+    COMMAND_CMD(0xC5, 0x28), /* VN231 */
+    COMMAND_CMD(0xC6, 0x1C), /* VN219 */
+    COMMAND_CMD(0xC7, 0x1E), /* VN203 */
+    COMMAND_CMD(0xC8, 0x73), /* VN175 */
+    COMMAND_CMD(0xC9, 0x1C), /* VN144 */
+
+    COMMAND_CMD(0xCA, 0x26),//L111 /* VN111 */
+    COMMAND_CMD(0xCB, 0x63),//L80  /* VN80 */
+    COMMAND_CMD(0xCC, 0x18),//L52  /* VN52 */
+    COMMAND_CMD(0xCD, 0x16),//L36  /* VN36 */
+    COMMAND_CMD(0xCE, 0x4D),//L24  /* VN24 */
+    COMMAND_CMD(0xCF, 0x1F),//L16  /* VN16 */
+    COMMAND_CMD(0xD0, 0x2A),//L12  /* VN12 */
+    COMMAND_CMD(0xD1, 0x4F),//L8   /* VN8 */
+    COMMAND_CMD(0xD2, 0x5F),//L4   /* VN4 */
+    COMMAND_CMD(0xD3, 0x39),//L0   /* VN0 */
+
+    SWITCH_PAGE_CMD(0x00),
+
+    //COMMAND_CMD(0x55, 0x00), // This is the power save, 0x0 is the default, power save off
+
+    COMMAND_CMD(0x35, 0x00),// TE ON, only V-Blanking, 0x34 TE OFF
+    CMD_DELAY(0x11, 0x00, 100),// Sleep Out - sleep in is 0x10
+    CMD_DELAY(0x29, 0x00, 100),// Display ON (OFF is 0x28)
+    //CMD_DELAY(0x38, 0x00, 100), // Idle mode off
+
+    // some other commands: 0x1 - software reset, 0x13 normal display mode on, 0x22 all pixels off 0x23 - all pixels on
+    // 0x38 idle mode off, 0x39 idle mode on, 0x59 stop transition
+    // 0x51 - display brightness

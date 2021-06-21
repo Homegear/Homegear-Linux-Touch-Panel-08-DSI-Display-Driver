@@ -15,6 +15,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of_device.h>
+#include <linux/firmware.h>
 
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>
@@ -36,7 +37,10 @@
 
 #define INIT_CMDS_RETRIES 3 // reset usually fails each time, if it fails
 #define CMD_RETRIES 5 // usually if it doesn't recover after the first or second failure, it won't recover at all
-#define RETRY_DELAY 120
+
+#define RETRY_DELAY 100
+
+#define CMD_DELAY_TIME 100
 
 //#define NO_ENTER_OFF 1
 //#define NO_ENTER_SLEEP 1
@@ -46,10 +50,13 @@
 //#define RETRY_INIT_CMD 1 // with a proper change in VC4 driver, it might work
 
 #define ENABLE_DITHERING 1
+#define SET_PIXELS_OFF 1
+
 //#define INVERSION 1
-//#define SET_PIXELS_OFF 1
 
 //#define TEST_READ 1
+
+#define MAX_INIT_CMDS_NO 300
 
 
 static atomic_t errorFlag = ATOMIC_INIT(0);
@@ -445,15 +452,142 @@ static const struct panel_command panel_cmds_init[] =
     //COMMAND_CMD(0x55, 0x00), // This is the power save, 0x0 is the default, power save off
 
     COMMAND_CMD(0x35, 0x00),// TE ON, only V-Blanking, 0x34 TE OFF
-    CMD_DELAY(0x11, 0x00, 120),// Sleep Out - sleep in is 0x10
-    CMD_DELAY(0x29, 0x00, 120),// Display ON (OFF is 0x28)
-    //CMD_DELAY(0x38, 0x00, 120), // Idle mode off
+    CMD_DELAY(0x11, 0x00, CMD_DELAY_TIME),// Sleep Out - sleep in is 0x10
+    CMD_DELAY(0x29, 0x00, CMD_DELAY_TIME),// Display ON (OFF is 0x28)
+    //CMD_DELAY(0x38, 0x00, CMD_DELAY_TIME), // Idle mode off
 
     // some other commands: 0x1 - software reset, 0x13 normal display mode on, 0x22 all pixels off 0x23 - all pixels on
     // 0x38 idle mode off, 0x39 idle mode on, 0x59 stop transition
     // 0x51 - display brightness
 };
 
+
+struct panel_command* fw_panel_cmds_init = NULL;
+int fw_panel_cmds_init_size = 0;
+
+static bool is_ignored(char c)
+{
+    return c == '\n' || c == '\r' || c == ' ' || c == '\t';
+}
+
+
+static int parse_val(char* param)
+{
+    long val;
+    int len;
+    char *endp;
+
+    if (!param) return 0;
+    len = strlen(param);
+    if (len > 1 && param[0] == '0' && (param[1] == 'x' || param[1] == 'X'))
+    {
+        if (kstrtol(param + 2, 16, &val) != 0)
+            val = 0;
+    }
+    else
+    {
+        if (kstrtol(param, 10, &val) != 0)
+            val = 0;
+    }
+
+    return val;
+}
+
+static void parse_firmware(char* data, int len)
+{
+    int i, to_pos, cmd_no;
+    char *cmd_str;
+    char *param1_str;
+    char *param2_str;
+    char *param3_str;
+    const char* delims = "(),";
+    char *dst = kmalloc(len + 1, GFP_KERNEL);
+
+    if (!dst) return;
+
+    to_pos = 0;
+    for (i = 0; i < len; ++i)
+    {
+        // skip over comments
+        if (i < len - 1)
+        {
+            if (data[i] == '/' && data[i + 1] == '/')
+            {
+                i += 2;
+                while (i < len && data[i] != '\n')
+                    ++i;
+            }
+            else if (data[i] == '/' && data[i + 1] == '*')
+            {
+                i += 2;
+                while (i < len - 1 && !(data[i] == '*' && data[i + 1] == '/'))
+                    ++i;
+
+                if (i < len - 1 && data[i] == '*' && data[i + 1] == '/')
+                    i += 2;
+            }
+
+            if (i >= len) break;
+        }
+
+        if (is_ignored(data[i])) continue;
+
+        dst[to_pos] = data[i];
+        ++to_pos;
+    }
+    dst[to_pos] = 0;
+
+    cmd_no = 0;
+    // now that all the garbage is removed, parse it
+    while((cmd_str = strsep(&dst, delims)) != NULL && cmd_no < MAX_INIT_CMDS_NO)
+    {
+        if (0 == cmd_str[0]) continue;
+
+        if (0 == strcmp(cmd_str, "SWITCH_PAGE_CMD")) // one parameter
+        {
+            param1_str = strsep(&dst, delims);
+            if (!param1_str) break;
+
+            fw_panel_cmds_init[cmd_no].cmd.cmd = 0xFF;
+            fw_panel_cmds_init[cmd_no].cmd.data = parse_val(param1_str);
+            fw_panel_cmds_init[cmd_no].delay = 0;
+
+            ++cmd_no;
+        }
+        else if (0 == strcmp(cmd_str, "COMMAND_CMD")) // two parameters
+        {
+            param1_str = strsep(&dst, delims);
+            if (!param1_str) break;
+            param2_str = strsep(&dst, delims);
+            if (!param2_str) break;
+
+            fw_panel_cmds_init[cmd_no].cmd.cmd = parse_val(param1_str);
+            fw_panel_cmds_init[cmd_no].cmd.data = parse_val(param2_str);
+            fw_panel_cmds_init[cmd_no].delay = 0;
+
+            ++cmd_no;
+        }
+        else if (0 == strcmp(cmd_str, "CMD_DELAY")) // three parameters
+        {
+            param1_str = strsep(&dst, delims);
+            if (!param1_str) break;
+            param2_str = strsep(&dst, delims);
+            if (!param2_str) break;
+            param3_str = strsep(&dst, delims);
+            if (!param3_str) break;
+
+            fw_panel_cmds_init[cmd_no].cmd.cmd = parse_val(param1_str);
+            fw_panel_cmds_init[cmd_no].cmd.data = parse_val(param2_str);
+            fw_panel_cmds_init[cmd_no].delay = parse_val(param3_str);
+
+            ++cmd_no;
+        }
+    }
+
+    fw_panel_cmds_init_size = cmd_no;
+
+    kfree(dst);
+}
 
 static ssize_t procfile_read(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
 {
@@ -541,7 +675,7 @@ static int switch_page(struct hgltp08_touchscreen *ctx, u8 page)
     return 0;
 }
 
-static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
+static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx, const struct panel_command* panel_cmds, int len)
 {
     int i, ret
 #ifdef RETRY_INIT_CMD
@@ -551,9 +685,9 @@ static int hgltp08_init_sequence(struct hgltp08_touchscreen *ctx)
 
     ret = 0;
 
-    for (i = 0; i < ARRAY_SIZE(panel_cmds_init); ++i)
+    for (i = 0; i < len; ++i)
     {
-        const struct panel_command *cmd = &panel_cmds_init[i];
+        const struct panel_command *cmd = &panel_cmds[i];
 
 #ifdef RETRY_INIT_CMD
         cmdcnt = 0;
@@ -599,7 +733,7 @@ static void reset_panel(struct hgltp08_touchscreen *ctx)
     if (ctx->gpioResetD)
         gpio_set_value_cansleep(ctx->resetPin, 1);
 
-    msleep(120);
+    msleep(CMD_DELAY_TIME);
 }
 
 static int hgltp08_prepare(struct drm_panel *panel)
@@ -627,7 +761,11 @@ static int hgltp08_prepare(struct drm_panel *panel)
     {
         reset_panel(ctx);
 
-        ret = hgltp08_init_sequence(ctx);
+        if (fw_panel_cmds_init && fw_panel_cmds_init_size > 0)
+            ret = hgltp08_init_sequence(ctx, fw_panel_cmds_init, fw_panel_cmds_init_size);
+        else
+            ret = hgltp08_init_sequence(ctx, panel_cmds_init, ARRAY_SIZE(panel_cmds_init));
+
         if (ret) msleep(RETRY_DELAY);
         ++cmdcnt;
     }
@@ -708,7 +846,7 @@ static int hgltp08_prepare(struct drm_panel *panel)
         return ret;
     }
 
-    msleep(120);
+    msleep(CMD_DELAY_TIME);
     */
 
     ctx->prepared = true;
@@ -733,7 +871,7 @@ static int hgltp08_unprepare(struct drm_panel *panel)
 #ifndef NO_ENTER_SLEEP
 
 // disable all unnecessary blocks inside the display module except interface communication
-    msleep(20);
+//  msleep(20);
 
     cmdcnt = 0;
     do
@@ -750,12 +888,15 @@ static int hgltp08_unprepare(struct drm_panel *panel)
         atomic_set(&errorFlag, 1);
     }
 
-    msleep(120);
+//    msleep(CMD_DELAY_TIME);
 #endif // NO_ENTER_SLEEP
 
     if (ctx->gpioBacklightD)
         gpio_set_value_cansleep(ctx->backlightPin, 1);
 
+#ifndef NO_ENTER_SLEEP
+    msleep(CMD_DELAY_TIME);
+#endif
 //    if (ctx->gpioResetD)
 //        gpio_set_value_cansleep(ctx->resetPin, 0);
 
@@ -797,7 +938,7 @@ static int hgltp08_enable(struct drm_panel *panel)
 
     if (!ctx->isOn)
     {
-        //msleep(100);
+//      msleep(CMD_DELAY_TIME);
 
         cmdcnt = 0;
         do
@@ -816,7 +957,7 @@ static int hgltp08_enable(struct drm_panel *panel)
         }
         else ctx->isOn = true;
 
-        msleep(120);
+        msleep(CMD_DELAY_TIME);
     }
 
     if (ctx->gpioBacklightD)
@@ -862,7 +1003,9 @@ static int hgltp08_disable(struct drm_panel *panel)
 #ifndef NO_ENTER_OFF
 //  stop displaying the image data on the display device
 
+#ifdef SET_PIXELS_OFF
     msleep(20);
+#endif
 
     cmdcnt = 0;
     do
@@ -882,7 +1025,7 @@ static int hgltp08_disable(struct drm_panel *panel)
 
     ctx->isOn = false;
 
-    msleep(120);
+    msleep(CMD_DELAY_TIME);
 #endif
 
     if (ctx->gpioBacklightD)
@@ -952,6 +1095,7 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
 
     struct device *dev = &dsi->dev;
     struct hgltp08_touchscreen *ctx;
+    const struct firmware* fw_entry = NULL;
 
     printk(KERN_ALERT "Probing!\n");
 
@@ -1061,8 +1205,19 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
     //MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST | MIPI_DSI_CLOCK_NON_CONTINUOUS
     dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM;
 
-    printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
+    if(request_firmware(&fw_entry, "hgltp08.txt", dev) == 0)
+    {
+        //printk(KERN_ALERT "Firmware: %s\n", (char*)fw_entry->data);
 
+        fw_panel_cmds_init = kmalloc(sizeof(struct panel_command) * MAX_INIT_CMDS_NO, GFP_KERNEL);
+        if (!fw_panel_cmds_init)
+            return -ENOMEM;
+
+        parse_firmware(fw_entry->data, fw_entry->size);
+    }
+    release_firmware(fw_entry);
+
+    printk(KERN_ALERT "DSI Device init for %s!\n", dsi->name);
 
 #if KERNEL_VERSION(5, 5, 0) <= LINUX_VERSION_CODE
 	drm_panel_init(&ctx->base, dev, &hgltp08_drm_funcs,
@@ -1138,6 +1293,13 @@ static int hgltp08_remove(struct mipi_dsi_device *dsi)
 
     kfree(ctx);
 
+    if (fw_panel_cmds_init)
+    {
+        kfree(fw_panel_cmds_init);
+        fw_panel_cmds_init = NULL;
+        fw_panel_cmds_init_size = 0;
+    }
+
     proc_remove(procFile);
 
     printk(KERN_ALERT "Removed!\n");
@@ -1169,4 +1331,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.23");
+MODULE_VERSION("1.0.24");

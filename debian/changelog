@@ -1,3 +1,9 @@
+hgltp08 (1.0.24) buster; urgency=medium
+
+  * Tweaked the delays again, added the posibility to read a 'firmware' for the init sequence
+
+ -- Adrian Roman <a.roman@ib-company.de>  Mon, 21 Jun 2021 17:00:00 +0200
+
 hgltp08 (1.0.23) buster; urgency=medium
 
   * Some more features to turn on/off with defines, tweaked some other things
@@ -38,13 +44,13 @@ hgltp08 (1.0.17) buster; urgency=medium
 
   * Changes in initialization sequence, from newer (hopefully better) specs
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 04 Jun 2021 13:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Fri, 04 Jun 2021 13:00:00 +0200
 
 hgltp08 (1.0.16) buster; urgency=medium
 
   * Various changes trying to fix the issue
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 03 Jun 2021 13:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Wen, 03 Jun 2021 13:00:00 +0200
 
 hgltp08 (1.0.15) buster; urgency=medium
 
@@ -110,13 +116,13 @@ hgltp08 (1.0.6) buster; urgency=medium
 
   * Exposed params to config.txt (eg using dtparam).
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 4 May 2021 17:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Tue, 4 May 2021 17:00:00 +0200
 
 hgltp08 (1.0.5) buster; urgency=medium
 
   * More safety checks. Removed a DSI call that might create troubles from enable function.
 
- -- Adrian Roman <a.roman@ib-company.de>  Mon, 4 May 2021 12:00:00 +0200
+ -- Adrian Roman <a.roman@ib-company.de>  Tue, 4 May 2021 12:00:00 +0200
 
 hgltp08 (1.0.4) buster; urgency=medium
 

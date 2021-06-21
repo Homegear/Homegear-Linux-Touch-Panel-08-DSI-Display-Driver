@@ -4,6 +4,7 @@ case "$1" in
 	install|upgrade|abort-upgrade)
 		# Remove all old versions
 		rm -f /boot/overlays/hgltp08.dtbo > /dev/null 2>&1
+		rm -f /lib/firmware/hgltp08.txt > /dev/null 2>&1
 		rm -Rf /var/lib/dkms/hgltp08/*
 		dkms remove hgltp08/1.0 --all
 		dkms remove hgltp08/1.0.1 --all
@@ -29,6 +30,7 @@ case "$1" in
 		dkms remove hgltp08/1.0.21 --all
 		dkms remove hgltp08/1.0.22 --all
 		dkms remove hgltp08/1.0.23 --all
+		dkms remove hgltp08/1.0.24 --all
 		;;
 esac
 

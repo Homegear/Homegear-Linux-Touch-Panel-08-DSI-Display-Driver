@@ -6,10 +6,11 @@ include /usr/share/dpkg/pkg-info.mk
 	dh $@ --with dkms
 
 override_dh_install:
+	dh_install 99-goodix.rules etc/udev/rules.d/
+	dh_install hgltp08.dtbo boot/overlays/
+	dh_install hgltp08.txt lib/firmware/
 	dh_install lcd_driver.c usr/src/hgltp08-$(DEB_VERSION_UPSTREAM)/
 	dh_install Makefile usr/src/hgltp08-$(DEB_VERSION_UPSTREAM)/
-	dh_install hgltp08.dtbo /boot/overlays/
-	dh_install 99-goodix.rules /etc/udev/rules.d/
 
 override_dh_dkms:
 	dh_dkms -V $(DEB_VERSION_UPSTREAM)
