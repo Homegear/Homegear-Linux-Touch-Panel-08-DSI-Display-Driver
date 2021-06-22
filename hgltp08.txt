@@ -173,7 +173,7 @@
 
 //  COMMAND_CMD(0x40, 0x33), //for EXT_CPCK_SEL for4003D - was commented out in the init sequence - also could be 0x53 - ILI4003D sel
 
-	COMMAND_CMD(0x34, 0x1), // dithering enable
+//	COMMAND_CMD(0x34, 0x1), // dithering enable
 
     // Power control 1 - both following
     COMMAND_CMD(0x50, 0xC0),//8D - 5V

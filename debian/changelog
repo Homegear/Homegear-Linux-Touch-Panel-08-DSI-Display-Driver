@@ -1,3 +1,9 @@
+hgltp08 (1.0.25) buster; urgency=medium
+
+  * Improved firmware loading, also removed a memory leak there, disabled dithering and pixels blanking
+
+ -- Adrian Roman <a.roman@ib-company.de>  Tue, 22 Jun 2021 13:30:00 +0200
+
 hgltp08 (1.0.24) buster; urgency=medium
 
   * Tweaked the delays again, added the posibility to read a 'firmware' for the init sequence

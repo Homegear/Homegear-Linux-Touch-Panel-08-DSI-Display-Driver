@@ -49,14 +49,14 @@
 
 //#define RETRY_INIT_CMD 1 // with a proper change in VC4 driver, it might work
 
-#define ENABLE_DITHERING 1
-#define SET_PIXELS_OFF 1
+//#define ENABLE_DITHERING 1
+//#define SET_PIXELS_OFF 1
 
 //#define INVERSION 1
 
 //#define TEST_READ 1
 
-#define MAX_INIT_CMDS_NO 300
+#define MAX_INIT_CMDS_NO 500
 
 
 static atomic_t errorFlag = ATOMIC_INIT(0);
@@ -474,10 +474,12 @@ static bool is_ignored(char c)
 static int parse_val(char* param)
 {
     long val;
-    int len;
-    char *endp;
+    //int len;
+    //char *endp;
 
     if (!param) return 0;
+
+    /*
     len = strlen(param);
     if (len > 1 && param[0] == '0' && (param[1] == 'x' || param[1] == 'X'))
     {
@@ -489,21 +491,32 @@ static int parse_val(char* param)
         if (kstrtol(param, 10, &val) != 0)
             val = 0;
     }
+    */
+
+    if (kstrtol(param, 0, &val) != 0) // simpler
+        val = 0;
 
     return val;
 }
 
-static void parse_firmware(char* data, int len)
+static void parse_firmware(const char* data, int len)
 {
     int i, to_pos, cmd_no;
     char *cmd_str;
     char *param1_str;
     char *param2_str;
     char *param3_str;
+    char *str_save1;
+    char *str_save2;
+    char *dst;
     const char* delims = "(),";
-    char *dst = kmalloc(len + 1, GFP_KERNEL);
 
+    if (0 == len) return;
+
+    dst = kmalloc(len + 1, GFP_KERNEL);
     if (!dst) return;
+
+    str_save1 = dst;
 
     to_pos = 0;
     for (i = 0; i < len; ++i)
@@ -537,9 +550,101 @@ static void parse_firmware(char* data, int len)
     }
     dst[to_pos] = 0;
 
+    str_save2 = kmalloc(to_pos + 1, GFP_KERNEL);
+    if (!str_save2)
+    {
+        kfree(dst);
+        return;
+    }
+    strcpy(str_save2, dst);
+
+    cmd_no = 0;
+    // count the commands
+    while((cmd_str = strsep(&dst, delims)) != NULL && cmd_no < MAX_INIT_CMDS_NO)
+    {
+        if (0 == cmd_str[0]) continue;
+
+        if (0 == strcmp(cmd_str, "SWITCH_PAGE_CMD")) // one parameter
+        {
+            param1_str = strsep(&dst, delims);
+            if (!param1_str)
+            {
+                printk(KERN_ALERT "SWITCH_PAGE_CMD has missing parameter\n");
+
+                break;
+            }
+
+            ++cmd_no;
+        }
+        else if (0 == strcmp(cmd_str, "COMMAND_CMD")) // two parameters
+        {
+            param1_str = strsep(&dst, delims);
+            if (!param1_str)
+            {
+                printk(KERN_ALERT "COMMAND_CMD has missing parameter\n");
+                break;
+            }
+            param2_str = strsep(&dst, delims);
+            if (!param2_str)
+            {
+                printk(KERN_ALERT "COMMAND_CMD has missing parameter\n");
+                break;
+            }
+
+            ++cmd_no;
+        }
+        else if (0 == strcmp(cmd_str, "CMD_DELAY")) // three parameters
+        {
+            param1_str = strsep(&dst, delims);
+            if (!param1_str)
+            {
+                printk(KERN_ALERT "CMD_DELAY has missing parameter\n");
+                break;
+            }
+            param2_str = strsep(&dst, delims);
+            if (!param2_str)
+            {
+                printk(KERN_ALERT "CMD_DELAY has missing parameter\n");
+                break;
+            }
+            param3_str = strsep(&dst, delims);
+            if (!param3_str)
+            {
+                printk(KERN_ALERT "CMD_DELAY has missing parameter\n");
+                break;
+            }
+
+            ++cmd_no;
+        }
+    }
+    kfree(str_save1);
+
+    if (cmd_no > 0)
+    {
+        if (cmd_no >= MAX_INIT_CMDS_NO)
+            printk(KERN_ALERT "The number of initialization commands in the firmware file is up to the limit, are you sure?\n");
+
+        fw_panel_cmds_init = kmalloc(sizeof(struct panel_command) * cmd_no, GFP_KERNEL);
+        if (!fw_panel_cmds_init)
+        {
+            kfree(str_save2);
+            return;
+        }
+    }
+    else
+    {
+        kfree(str_save2);
+        return;
+    }
+
+    fw_panel_cmds_init_size = cmd_no;
+
+    printk(KERN_ALERT "The number of initialization commands in the firmware file is: %d\n", cmd_no);
+
+    dst = str_save2;
     cmd_no = 0;
     // now that all the garbage is removed, parse it
-    while((cmd_str = strsep(&dst, delims)) != NULL && cmd_no < MAX_INIT_CMDS_NO)
+    while((cmd_str = strsep(&dst, delims)) != NULL && cmd_no < fw_panel_cmds_init_size)
     {
         if (0 == cmd_str[0]) continue;
 
@@ -584,9 +689,7 @@ static void parse_firmware(char* data, int len)
         }
     }
 
-    fw_panel_cmds_init_size = cmd_no;
-
-    kfree(dst);
+    kfree(str_save2);
 }
 
 static ssize_t procfile_read(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
@@ -913,7 +1016,6 @@ static int hgltp08_enable(struct drm_panel *panel)
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
     int ret;
     int cmdcnt;
-    struct mipi_dsi_device *dsi = ctx->dsi;
 
     if (ctx->enabled)
         return 0;
@@ -975,7 +1077,6 @@ static int hgltp08_disable(struct drm_panel *panel)
     int cmdcnt;
     int ret;
     struct hgltp08_touchscreen *ctx = panel_to_ts(panel);
-    struct mipi_dsi_device *dsi = ctx->dsi;
 
     if (!ctx->enabled)
         return 0;
@@ -1209,10 +1310,6 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
     {
         //printk(KERN_ALERT "Firmware: %s\n", (char*)fw_entry->data);
 
-        fw_panel_cmds_init = kmalloc(sizeof(struct panel_command) * MAX_INIT_CMDS_NO, GFP_KERNEL);
-        if (!fw_panel_cmds_init)
-            return -ENOMEM;
-
         parse_firmware(fw_entry->data, fw_entry->size);
     }
     release_firmware(fw_entry);
@@ -1274,7 +1371,6 @@ static int hgltp08_probe(struct mipi_dsi_device *dsi)
 static int hgltp08_remove(struct mipi_dsi_device *dsi)
 {
     struct hgltp08_touchscreen *ctx = mipi_dsi_get_drvdata(dsi);
-    struct device *dev = &dsi->dev;
 
     mipi_dsi_detach(dsi);
     drm_panel_remove(&ctx->base);
@@ -1331,4 +1427,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.24");
+MODULE_VERSION("1.0.25");
