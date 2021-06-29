@@ -38,9 +38,9 @@
 #define INIT_CMDS_RETRIES 3 // reset usually fails each time, if it fails
 #define CMD_RETRIES 5 // usually if it doesn't recover after the first or second failure, it won't recover at all
 
-#define RETRY_DELAY 100
+#define RETRY_DELAY 150
 
-#define CMD_DELAY_TIME 100
+#define CMD_DELAY_TIME 150
 
 //#define NO_ENTER_OFF 1
 //#define NO_ENTER_SLEEP 1
@@ -1427,4 +1427,4 @@ module_mipi_dsi_driver(panel_hgltp08_dsi_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Homegear GmbH <contact@homegear.email>");
 MODULE_DESCRIPTION("Homegear LTP08 Multitouch 8\" Display; black; WXGA 1280x800; Linux");
-MODULE_VERSION("1.0.25");
+MODULE_VERSION("1.0.26");
