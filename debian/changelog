@@ -1,3 +1,9 @@
+hgltp08 (1.0.27) buster; urgency=medium
+
+  * Decreased delays back to 120, should be enough with the new fix in the vc4, added 'Enabling' log message
+
+ -- Adrian Roman <a.roman@ib-company.de>  Thu, 01 Jul 2021 17:00:00 +0200
+
 hgltp08 (1.0.26) buster; urgency=medium
 
   * Incresed delays, seems a little bit more stable with the increased values
